@@ -6,6 +6,8 @@ const Prestador = require('../models/prestador');
 const { checkCUIT, timeNow } = require('../helpers/commons');
 const { v4: uuidv4 }=require('uuid');
 const { subirImagen } = require('../helpers/imagenes');
+const { generarJWT } = require('../helpers/jwt');
+const { notificar } = require('./mail');
 
 const crearUsuario= async(req,res = response) =>{
     const {EmailResponsable, Contrasena, CUIT, Tipo}=req.body;
@@ -56,13 +58,13 @@ const crearUsuario= async(req,res = response) =>{
 
         await usuario.save();
 
-        // const token= await generarJWT(usuario._id,1);
-        // notificar(usuario.mail,usuario._id,2)
+        const token= await generarJWT(usuario._id, EmailResponsable, 'renew');
+        notificar(EmailResponsable, usuario._id, 'validacion')
 
         res.json({
             ok:true,
             EmailResponsable,
-            //token
+            token
         });
         
     } catch (error) {
