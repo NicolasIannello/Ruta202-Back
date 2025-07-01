@@ -4,6 +4,8 @@ const ClienteSchema = Schema({
     DNI: { type: String , required: true},
     Cargo: { type: String , required: true},
     Rubro: { type: String , required: true},
+
+    UUID: { type: String, required: true },
 });
 
 ClienteSchema.method('toJSON', function() {
