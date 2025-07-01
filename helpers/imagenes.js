@@ -43,4 +43,4 @@ const subirImagen= async(imagen,UsuarioID,id,res)=>{
 //     return true;
 // }
 
-module.exports={subirImagen, borrarImagen };
+module.exports={ subirImagen };
