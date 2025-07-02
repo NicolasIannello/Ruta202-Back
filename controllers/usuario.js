@@ -132,7 +132,7 @@ const login=async(req,res=response)=>{
     try {        
         const usuarioDB= await Usuario.findOne({EmailResponsable: email});    
         if(!usuarioDB){
-            return res.status(404).json({
+            return res.json({
                 ok:false,
                 msg:'Datos incorrectos'
             })
@@ -140,7 +140,7 @@ const login=async(req,res=response)=>{
         
         const validPassword=bcrypt.compareSync(password,usuarioDB.Contrasena);
         if(!validPassword){
-            return res.status(400).json({
+            return res.json({
                 ok:false,
                 msg:'Datos incorrectos'
             })
@@ -183,4 +183,29 @@ const login=async(req,res=response)=>{
     }
 }
 
-module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login }
+const renewToken= async(req,res=response)=>{    
+    const id=req.id;
+    const usuarioDB= await Usuario.findById(id)
+    const token= await generarJWT(id, usuarioDB.EmailResponsable, 'renew');
+
+    if(!usuarioDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{        
+        const {...campos}=usuarioDB;
+        campos._doc.UltimaConexion=timeNow();
+        await Usuario.findByIdAndUpdate(usuarioDB.id, campos,{new:true});  
+
+        res.json({
+            ok:true,
+            token,
+            nombre: usuarioDB.Empresa,
+            mail: usuarioDB.EmailResponsable,
+            id
+        })
+    }
+}
+
+module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken }
