@@ -19,8 +19,8 @@ const notificar= async(mail,id,tipo)=>{
     switch (tipo) {
         case 'validacion':
             title="Verificacion de cuenta";
-            msg='Para terminar de configurar su cuenta siga el link.<br>'+process.env.LINK+'/verificar/'+token;
-            msg2="Para terminar de configurar su cuenta siga el link.\n"+process.env.LINK+"/verificar/"+token;
+            msg='Para terminar de configurar su cuenta siga el link.<br>'+process.env.LINK+'/validacion/'+token;
+            msg2="Para terminar de configurar su cuenta siga el link.\n"+process.env.LINK+"/validacion/"+token;
         break;
         case 4:
             title="Cambio de contraseña";
