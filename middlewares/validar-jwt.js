@@ -25,10 +25,11 @@ const validarJWT=(req,res,next)=>{
             default:
                 break;
         }
-        const { id, mail }=jwt.verify(token,secret);
+        const { id, mail, exp, iat }=jwt.verify(token,secret);
         
         req.id=id;
         req.mail=mail;
+        if(tipo==1) req.remember=((exp-iat)/3600) > 48 ? true : false;
 
         next();
     } catch (error) {

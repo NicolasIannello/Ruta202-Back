@@ -186,8 +186,7 @@ const login=async(req,res=response)=>{
 const renewToken= async(req,res=response)=>{    
     const id=req.id;
     const usuarioDB= await Usuario.findById(id)
-    const token= await generarJWT(id, usuarioDB.EmailResponsable, 'renew');
-
+    const token= await generarJWT(id, usuarioDB.EmailResponsable, 'renew', req.remember);    
     if(!usuarioDB){
         res.json({
             ok:false
