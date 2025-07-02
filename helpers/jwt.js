@@ -1,6 +1,6 @@
 const jwt =require('jsonwebtoken');
 
-const generarJWT=(id, mail, tipo)=>{
+const generarJWT=(id, mail, tipo, remember)=>{
     return new Promise((resolve,reject)=>{
         const payload={ id, mail };
 
@@ -8,7 +8,7 @@ const generarJWT=(id, mail, tipo)=>{
         switch (tipo) {
             case 'renew':
                 secret=process.env.JWT_SECRET_RENEW;
-                expired='72h';
+                expired=remember ? '15d' : '48h';
                 break;
             case 'validacion':
                 secret=process.env.JWT_SECRET_VALIDACION;
