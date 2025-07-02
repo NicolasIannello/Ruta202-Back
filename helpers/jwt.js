@@ -8,7 +8,7 @@ const generarJWT=(id, mail, tipo, remember)=>{
         switch (tipo) {
             case 'renew':
                 secret=process.env.JWT_SECRET_RENEW;
-                expired=remember ? '15d' : '48h';
+                expired=remember ? '15d' : '72h';
                 break;
             case 'validacion':
                 secret=process.env.JWT_SECRET_VALIDACION;
