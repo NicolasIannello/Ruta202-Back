@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 
 const validarJWT=(req,res,next)=>{
-    const { token,tipo }=req.body
+    const { token, tipo }=req.body
     
     if(!token){
         return res.status(401).json({
@@ -32,6 +32,12 @@ const validarJWT=(req,res,next)=>{
 
         next();
     } catch (error) {
+        if(error.name=='TokenExpiredError'){
+            return res.status(401).json({
+                ok:false,
+                msg:'token expirado'
+            });
+        }
         return res.status(401).json({
             ok:false,
             msg:'token mal'

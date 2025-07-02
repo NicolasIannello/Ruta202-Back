@@ -76,4 +76,54 @@ const crearUsuario= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearUsuario }
+const validarCuenta= async(req,res=response)=>{
+    const id=req.id;
+    const usuarioDB= await Usuario.findById(id)
+    
+    if(!usuarioDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const {Validado, ...campos}=usuarioDB;
+        
+        if(!Validado){
+            campos._doc.Validado=true;
+            await Usuario.findByIdAndUpdate(id, campos,{new:true});
+        }
+
+        res.json({
+            ok:true,
+            mail:req.mail
+        })
+    }
+}
+
+const reValidarCuenta= async(req,res=response)=>{
+    const usuarioDB= await Usuario.find({EmailResponsable: req.body.email})
+    
+    if(!usuarioDB[0]){        
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const {Validado, EmailResponsable, id}=usuarioDB[0];
+        
+        if(!Validado){
+            notificar(EmailResponsable, id, 'validacion')
+        }else{
+            return res.json({
+                ok:false,
+            })
+        }
+
+    
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+module.exports={ crearUsuario, validarCuenta, reValidarCuenta }
