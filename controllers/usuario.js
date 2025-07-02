@@ -126,4 +126,61 @@ const reValidarCuenta= async(req,res=response)=>{
     }
 }
 
-module.exports={ crearUsuario, validarCuenta, reValidarCuenta }
+const login=async(req,res=response)=>{
+    const { email, password, rememberMe }= req.body;
+
+    try {        
+        const usuarioDB= await Usuario.findOne({EmailResponsable: email});    
+        if(!usuarioDB){
+            return res.status(404).json({
+                ok:false,
+                msg:'Datos incorrectos'
+            })
+        }
+        
+        const validPassword=bcrypt.compareSync(password,usuarioDB.Contrasena);
+        if(!validPassword){
+            return res.status(400).json({
+                ok:false,
+                msg:'Datos incorrectos'
+            })
+        }
+
+        const {...campos}=usuarioDB;
+        campos._doc.UltimaConexion=timeNow();
+        await Usuario.findByIdAndUpdate(usuarioDB.id, campos,{new:true});
+
+        validado=usuarioDB.Validado;
+        habilitado=usuarioDB.Habilitado;
+        token='';
+        nombre='';
+        mail='';
+        id='';
+        if(validado && habilitado){
+            token= await generarJWT(usuarioDB.id, usuarioDB.EmailResponsable, 'renew', rememberMe);
+            nombre=usuarioDB.Empresa;
+            mail=usuarioDB.EmailResponsable;
+            id=usuarioDB.id
+        }else if(!validado){
+            notificar(usuarioDB.EmailResponsable, usuarioDB.id, 'validacion')
+        }
+
+        res.json({
+            ok:true,
+            validado,
+            habilitado,
+            token,
+            nombre,
+            mail,
+            id
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error login'
+        });
+    }
+}
+
+module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login }
