@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
+const Usuario = require("../models/usuario");
 
-const validarJWT=(req,res,next)=>{
+const validarJWT= async (req,res,next)=>{
     const { token, tipo }=req.body
     
     if(!token){
@@ -25,7 +26,10 @@ const validarJWT=(req,res,next)=>{
             default:
                 break;
         }
-        const { id, mail, exp, iat }=jwt.verify(token,secret);
+        const { id, mail, exp, iat, tokenID }=jwt.verify(token,secret);
+
+        const usuarioDB = await Usuario.findById(id);
+        if(usuarioDB.TokenID!=tokenID) throw new Error("IDs no coinciden");
         
         req.id=id;
         req.mail=mail;
@@ -33,15 +37,9 @@ const validarJWT=(req,res,next)=>{
 
         next();
     } catch (error) {
-        if(error.name=='TokenExpiredError'){
-            return res.status(401).json({
-                ok:false,
-                msg:'token expirado'
-            });
-        }
         return res.status(401).json({
             ok:false,
-            msg:'token mal'
+            msg: error.name
         });
     }
 }

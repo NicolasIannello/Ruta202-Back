@@ -1,8 +1,11 @@
 const jwt =require('jsonwebtoken');
+const Usuario = require('../models/usuario');
 
 const generarJWT=(id, mail, tipo, remember)=>{
-    return new Promise((resolve,reject)=>{
-        const payload={ id, mail };
+    return new Promise(async (resolve,reject)=>{
+        const usuarioDB = await Usuario.findById(id);
+        let tokenID = usuarioDB.TokenID;
+        const payload={ id, mail, tokenID };
 
         let secret, expired;
         switch (tipo) {
@@ -14,9 +17,9 @@ const generarJWT=(id, mail, tipo, remember)=>{
                 secret=process.env.JWT_SECRET_VALIDACION;
                 expired='2h';
                 break;
-            case 'pass':
+            case 'password':
                 secret=process.env.JWT_SECRET_PASS;
-                expired='2h';
+                expired='30m';
                 break;
         }
 
