@@ -16,10 +16,11 @@ const UsuarioSchema = Schema({
     UltimaConexion: { type: String, required: true },
     Validado: { type: Boolean, required: true },
     UUID: { type: String, required: true },
+    TokenID: { type: Number, required: true },
 });
 
 UsuarioSchema.method('toJSON', function() {
-    const { __v, Contraseña, ...object } = this.toObject();
+    const { __v, Contrasena, ...object } = this.toObject();
     return object;
 });
 
