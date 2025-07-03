@@ -36,6 +36,7 @@ const crearUsuario= async(req,res = response) =>{
         usuario.Validado=false; 
         usuario.UltimaConexion=timeNow();
         usuario.UUID=uuidv4();
+        usuario.TokenID=0;
 
         if(Tipo=='0'){
             const cliente= new Cliente(req.body);
@@ -89,6 +90,7 @@ const validarCuenta= async(req,res=response)=>{
         const {Validado, ...campos}=usuarioDB;
         
         if(!Validado){
+            campos._doc.TokenID+=1;
             campos._doc.Validado=true;
             await Usuario.findByIdAndUpdate(id, campos,{new:true});
         }
@@ -186,7 +188,6 @@ const login=async(req,res=response)=>{
 const renewToken= async(req,res=response)=>{    
     const id=req.id;
     const usuarioDB= await Usuario.findById(id)
-    const token= await generarJWT(id, usuarioDB.EmailResponsable, 'renew', req.remember);    
     if(!usuarioDB){
         res.json({
             ok:false
@@ -195,8 +196,10 @@ const renewToken= async(req,res=response)=>{
     }else{        
         const {...campos}=usuarioDB;
         campos._doc.UltimaConexion=timeNow();
+        campos._doc.TokenID+=1;
         await Usuario.findByIdAndUpdate(usuarioDB.id, campos,{new:true});  
 
+        const token= await generarJWT(id, usuarioDB.EmailResponsable, 'renew', req.remember);
         res.json({
             ok:true,
             token,
@@ -207,4 +210,46 @@ const renewToken= async(req,res=response)=>{
     }
 }
 
-module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken }
+const forgotPassword= async(req,res=response)=>{
+    const usuarioDB= await Usuario.find({EmailResponsable: req.body.email})
+    
+    if(!usuarioDB[0]){        
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const {EmailResponsable, id}=usuarioDB[0];
+        
+        notificar(EmailResponsable, id, 'password')
+    
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+const changePassword= async(req,res=response)=>{
+    const id=req.id;
+    const usuarioDB= await Usuario.findById(id)
+    
+    if(!usuarioDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const {Contrasena, ...campos}=usuarioDB;
+        
+        const salt=bcrypt.genSaltSync();
+        campos._doc.TokenID+=1;
+        campos._doc.Contrasena=bcrypt.hashSync(req.body.password,salt);
+        await Usuario.findByIdAndUpdate(id, campos,{new:true});
+
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword }
