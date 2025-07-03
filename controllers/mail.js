@@ -22,10 +22,10 @@ const notificar= async(mail,id,tipo)=>{
             msg='Para terminar de configurar su cuenta siga el link.<br>'+process.env.LINK+'/validacion/'+token;
             msg2="Para terminar de configurar su cuenta siga el link.\n"+process.env.LINK+"/validacion/"+token;
         break;
-        case 4:
+        case 'password':
             title="Cambio de contraseña";
-            msg='Para realizar un cambio de contraseña siga el link.<br>'+process.env.LINK+'/cambio/'+token;
-            msg2="Para realizar un cambio de contraseña siga el link.\n"+process.env.LINK+"/cambio/"+token;
+            msg='Para realizar un cambio de contraseña siga el link.<br>'+process.env.LINK+'/cambioPassword/'+token;
+            msg2="Para realizar un cambio de contraseña siga el link.\n"+process.env.LINK+"/cambioPassword/"+token;
         break;
     }
 
