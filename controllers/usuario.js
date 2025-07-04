@@ -252,4 +252,29 @@ const changePassword= async(req,res=response)=>{
     }
 }
 
-module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword }
+const getUserData= async(req,res=response)=>{
+    const id=req.id;
+    const usuarioDB= await Usuario.findById(id, {Habilitado:0, Validado:0, __v:0, TokenID:0, UltimaConexion:0, Contrasena:0})
+    if(!usuarioDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        let datoDB;
+        
+        if(usuarioDB.Tipo=='0') datoDB= await Cliente.findOne({UUID: usuarioDB.UUID}, {UUID:0, _id:0, __v:0});
+        if(usuarioDB.Tipo=='1') datoDB= await Prestador.findOne({UUID: usuarioDB.UUID}, {UUID:0, _id:0, __v:0});
+        console.log(usuarioDB);
+        
+        console.log(datoDB);
+        
+        res.json({
+            ok:true,
+            usuarioDB,
+            datoDB
+        })
+    }
+}
+
+module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword, getUserData }

@@ -7,7 +7,7 @@ const UsuarioSchema = Schema({
     Celular: { type: String , required: true},
     Nombre: { type: String , required: true},
     Apellido: { type: String , required: true},
-    EmailResponsable: { type: String , required: true},
+    EmailResponsable: { type: String , required: true, unique: true},
     CondicionFiscal: { type: String , required: true},
     Contrasena: { type: String , required: true},
 
@@ -20,7 +20,7 @@ const UsuarioSchema = Schema({
 });
 
 UsuarioSchema.method('toJSON', function() {
-    const { __v, Contrasena, ...object } = this.toObject();
+    const { __v, Contrasena, TokenID, ...object } = this.toObject();
     return object;
 });
 
