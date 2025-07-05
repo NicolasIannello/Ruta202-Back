@@ -13,6 +13,7 @@ app.use( express.json() );
 dbConnection();
 
 app.use('/ruta/usuarios', require('./routes/usuarios'));
+app.use('/ruta/imagenes', require('./routes/imagenes'));
 
 const server = http.createServer(app);
 
