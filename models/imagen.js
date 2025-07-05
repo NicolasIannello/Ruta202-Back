@@ -2,6 +2,7 @@ const { Schema, model } = require('mongoose');
 
 const ImagenSchema = Schema({
     usuario: { type: String, require:true },
+    tipo: { type: String, require:true },
     img: { type: String, require:true },
 });
 
