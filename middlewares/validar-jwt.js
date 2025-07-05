@@ -2,7 +2,7 @@ const jwt = require("jsonwebtoken");
 const Usuario = require("../models/usuario");
 
 const validarJWT= async (req,res,next)=>{
-    const { token, tipo }=req.body
+    const { token, tipo }=req.body || req.query
     
     if(!token){
         return res.status(401).json({
@@ -14,6 +14,7 @@ const validarJWT= async (req,res,next)=>{
     try {        
         let secret;
         switch (tipo) {
+            case '1':
             case 1:
                 secret=process.env.JWT_SECRET_RENEW;
                 break;
