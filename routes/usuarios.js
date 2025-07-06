@@ -1,7 +1,7 @@
 const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
-const { crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, changePassword, forgotPassword, getUserData } = require('../controllers/usuario');
+const { crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, changePassword, forgotPassword, getUserData, changeData } = require('../controllers/usuario');
 const expressFileUpload =require('express-fileupload');
 const { validarJWT } = require('../middlewares/validar-jwt');
 
@@ -63,5 +63,7 @@ router.post('/changePassword', [
 ],changePassword);
 
 router.post('/getUserData', validarJWT, getUserData);
+
+router.post('/changeData', validarJWT, changeData);
 
 module.exports=router;
