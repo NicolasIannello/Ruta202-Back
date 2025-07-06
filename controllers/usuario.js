@@ -5,9 +5,10 @@ const Cliente = require('../models/cliente');
 const Prestador = require('../models/prestador');
 const { checkCUIT, timeNow } = require('../helpers/commons');
 const { v4: uuidv4 }=require('uuid');
-const { subirImagen } = require('../helpers/imagenes');
+const { subirImagen, borrarImagen } = require('../helpers/imagenes');
 const { generarJWT } = require('../helpers/jwt');
 const { notificar } = require('./mail');
+const Imagen = require('../models/imagen');
 
 const crearUsuario= async(req,res = response) =>{
     const {EmailResponsable, Contrasena, CUIT, Tipo}=req.body;
@@ -48,11 +49,11 @@ const crearUsuario= async(req,res = response) =>{
             prestador.UUID=usuario.UUID;
             
             for (let i = 0; i < req.files['img'].length; i++) {
-                subirImagen(req.files['img'][i], usuario.UUID, 1, res);
+                subirImagen(req.files['img'][i], usuario.UUID, 1, res, 'vehiculo');
             }
 
-            subirImagen(req.files['imgFrente'], usuario.UUID, 0, res);
-            subirImagen(req.files['imgDorso'], usuario.UUID, 0, res);
+            subirImagen(req.files['imgFrente'], usuario.UUID, 0, res, 'frente');
+            subirImagen(req.files['imgDorso'], usuario.UUID, 0, res, 'dorso');
 
             await prestador.save();
         }
@@ -261,20 +262,93 @@ const getUserData= async(req,res=response)=>{
         })
         return;
     }else{
-        let datoDB;
+        let datoDB, imgs;
         
         if(usuarioDB.Tipo=='0') datoDB= await Cliente.findOne({UUID: usuarioDB.UUID}, {UUID:0, _id:0, __v:0});
-        if(usuarioDB.Tipo=='1') datoDB= await Prestador.findOne({UUID: usuarioDB.UUID}, {UUID:0, _id:0, __v:0});
-        console.log(usuarioDB);
-        
-        console.log(datoDB);
-        
+        if(usuarioDB.Tipo=='1') {
+            datoDB= await Prestador.findOne({UUID: usuarioDB.UUID}, {UUID:0, _id:0, __v:0});
+            imgs= await Imagen.find({usuario: usuarioDB.UUID}, {usuario:0, _id:0, __v:0});
+        }
+
         res.json({
             ok:true,
             usuarioDB,
-            datoDB
+            datoDB,
+            imgs
         })
     }
 }
 
-module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword, getUserData }
+const changeData= async(req,res=response)=>{
+    const id=req.id;
+    const usuarioDB= await Usuario.findById(id)
+    
+    if(!usuarioDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const {...campos}=usuarioDB;
+        campos._doc = changeCampos(campos._doc, req.files['userPayload'].data, res);
+
+        await Usuario.findByIdAndUpdate(id, campos,{new:true});
+
+        if(req.body.Tipo=='0'){
+            const clienteDB= await Cliente.findOne({UUID: usuarioDB.UUID})
+            const {...campos}=clienteDB;
+            campos._doc = changeCampos(campos._doc, req.files['datoPayload'].data, res);
+            
+            await Cliente.findByIdAndUpdate(clienteDB.id, campos,{new:true});
+        }else{
+            const prestadorDB= await Prestador.findOne({UUID: usuarioDB.UUID})
+            const {...campos}=prestadorDB;
+            campos._doc = changeCampos(campos._doc, req.files['datoPayload'].data, res);
+
+            await Prestador.findByIdAndUpdate(prestadorDB.id, campos,{new:true});
+
+            if(req.files['img']){
+                await borrarImagen(usuarioDB.UUID,'vehiculo','vehiculo')
+                for (let i = 0; i < req.files['img'].length; i++) {
+                    subirImagen(req.files['img'][i], usuarioDB.UUID, 1, res, 'vehiculo');
+                }
+            }
+
+            if(req.files['imgFrente']){
+                await borrarImagen(usuarioDB.UUID,'carnet','frente')
+                subirImagen(req.files['imgFrente'], usuarioDB.UUID, 0, res, 'frente');
+            }
+            if(req.files['imgDorso']) {
+                await borrarImagen(usuarioDB.UUID,'carnet','dorso')
+                subirImagen(req.files['imgDorso'], usuarioDB.UUID, 0, res, 'dorso');
+            }
+        }
+
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+const changeCampos= (campos, buffer, res)=>{
+    const jsonString = buffer.toString('utf8');
+    const data = JSON.parse(jsonString);
+
+    if(data['CUIT']){
+        const flag=checkCUIT(data['CUIT']);
+        if(!flag){
+            return res.status(400).json({
+                ok:false,
+                msg:'CUIT invalido'
+            });
+        }
+    }
+
+    for (const key in data) {
+        campos[key]=data[key];
+    }
+
+    return campos;
+}
+
+module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword, getUserData, changeData }
