@@ -294,7 +294,7 @@ const changeData= async(req,res=response)=>{
 
         await Usuario.findByIdAndUpdate(id, campos,{new:true});
 
-        if(req.body.Tipo=='0'){
+        if(usuarioDB.Tipo=='0'){
             const clienteDB= await Cliente.findOne({UUID: usuarioDB.UUID})
             const {...campos}=clienteDB;
             campos._doc = changeCampos(campos._doc, req.files['datoPayload'].data, res);
