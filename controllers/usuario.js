@@ -344,6 +344,13 @@ const changeCampos= (campos, buffer, res)=>{
         }
     }
 
+    if(data['EmailResponsable']){        
+        return res.status(400).json({
+            ok:false,
+            msg:'Error'
+        });
+    }
+
     for (const key in data) {
         campos[key]=data[key];
     }
