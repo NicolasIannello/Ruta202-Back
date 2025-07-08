@@ -14,6 +14,7 @@ dbConnection();
 
 app.use('/ruta/usuarios', require('./routes/usuarios'));
 app.use('/ruta/imagenes', require('./routes/imagenes'));
+app.use('/ruta/admins', require('./routes/admins'));
 
 const server = http.createServer(app);
 
