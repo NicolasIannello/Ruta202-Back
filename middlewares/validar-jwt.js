@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const Usuario = require("../models/usuario");
+const Admin = require("../models/admin");
 
 const validarJWT= async (req,res,next)=>{
     const { token, tipo }=req.body || req.query
@@ -60,8 +61,8 @@ const validarJWTAdmin= async (req,res,next)=>{
                 
         const { id, tokenID }=jwt.verify(token,secret);
 
-        const usuarioDB = await Usuario.findById(id);
-        if(usuarioDB.TokenID!=tokenID) throw new Error("IDs no coinciden");
+        const adminDB = await Admin.findById(id);
+        if(adminDB.TokenID!=tokenID) throw new Error("IDs no coinciden");
         
         req.id=id;
 
