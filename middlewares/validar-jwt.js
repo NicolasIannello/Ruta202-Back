@@ -45,4 +45,33 @@ const validarJWT= async (req,res,next)=>{
     }
 }
 
-module.exports={validarJWT};
+const validarJWTAdmin= async (req,res,next)=>{
+    const { token }=req.body
+    
+    if(!token){
+        return res.status(401).json({
+            ok:false,
+            msg:'no hay token'
+        });
+    }
+
+    try {        
+        let secret=process.env.JWT_SECRET_ADMIN;
+                
+        const { id, tokenID }=jwt.verify(token,secret);
+
+        const usuarioDB = await Usuario.findById(id);
+        if(usuarioDB.TokenID!=tokenID) throw new Error("IDs no coinciden");
+        
+        req.id=id;
+
+        next();
+    } catch (error) {
+        return res.status(401).json({
+            ok:false,
+            msg: error.name
+        });
+    }
+}
+
+module.exports={ validarJWT, validarJWTAdmin };

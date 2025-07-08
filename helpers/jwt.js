@@ -1,5 +1,6 @@
 const jwt =require('jsonwebtoken');
 const Usuario = require('../models/usuario');
+const Admin = require('../models/admin');
 
 const generarJWT=(id, mail, tipo, remember)=>{
     return new Promise(async (resolve,reject)=>{
@@ -36,4 +37,26 @@ const generarJWT=(id, mail, tipo, remember)=>{
     })
 }
 
-module.exports={generarJWT};
+const generarJWTAdmin=(id)=>{
+    return new Promise(async (resolve,reject)=>{
+        const adminDB = await Admin.findById(id);
+        let tokenID = adminDB.TokenID;
+        const payload={ id, tokenID };
+
+        let secret=process.env.JWT_SECRET_ADMIN;
+        let expired='48h';
+
+        jwt.sign(payload, secret,{
+            expiresIn: expired
+        }, (err,token)=>{
+            if(err){
+                console.log(err);
+                reject(err)
+            }else{
+                resolve(token);
+            }
+        });
+    })
+}
+
+module.exports={ generarJWT, generarJWTAdmin };
