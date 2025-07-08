@@ -47,7 +47,7 @@ const validarJWT= async (req,res,next)=>{
 }
 
 const validarJWTAdmin= async (req,res,next)=>{
-    const { token }=req.body
+    const { token }=req.body || req.query
     
     if(!token){
         return res.status(401).json({
