@@ -3,6 +3,7 @@ const { v4: uuidv4 }=require('uuid');
 const fs=require('fs');
 const path=require('path');
 const Usuario = require('../models/usuario');
+const Admin = require('../models/admin');
 
 const subirImagen= async(imagen,UsuarioID,id,res,tipo)=>{
     const img=imagen;
@@ -52,7 +53,12 @@ const getImg= async(req,res = response) =>{
     let usuarioDB
     if(req.id){
         usuarioDB = await Usuario.findById(req.id)
-        if(usuarioDB.UUID!=imgDB.usuario){
+        let flag=true;
+        if(!usuarioDB){
+            adminDB = await Admin.findById(req.id)
+            if(adminDB) flag=false;
+        }
+        if(flag && usuarioDB.UUID!=imgDB.usuario){
             return res.status(500).json({
                 ok:false,
                 msg:'error en verificacion',
