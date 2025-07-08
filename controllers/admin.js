@@ -92,4 +92,38 @@ const inicioData= async(req,res=response)=>{
     }
 }
 
-module.exports={ login, renewToken, inicioData }
+const getUsers= async(req,res=response)=>{    
+    const id=req.id;
+    const adminDB= await Admin.findById(id)
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const desde= parseInt(req.body.desde) || 0;
+        const limit= parseInt(req.body.limit) || 20;
+        const orden= parseInt(req.body.orden) || 1;
+        const order= req.body.order || '_id';
+        var sortOperator = { "$sort": { } };
+        sortOperator["$sort"][order] = orden;
+
+        const [ users, total ]= await Promise.all([
+            Usuario.aggregate([
+                { $project: { "Contrasena": 0, __v: 0,  "TokenID": 0 } },
+                sortOperator,
+                { $skip: desde },
+                { $limit: limit },
+            ]).collation({locale: 'en'}),
+            Usuario.countDocuments()
+        ]);
+        
+        res.json({
+            ok:true,
+            users,
+            total
+        })
+    }
+}
+
+module.exports={ login, renewToken, inicioData, getUsers }
