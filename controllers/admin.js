@@ -3,6 +3,9 @@ const bcrypt=require('bcryptjs');
 const { generarJWTAdmin } = require('../helpers/jwt');
 const Admin = require('../models/admin');
 const Usuario = require('../models/usuario');
+const Cliente = require('../models/cliente');
+const Prestador = require('../models/prestador');
+const Imagen = require('../models/imagen');
 
 const login=async(req,res=response)=>{
     const { admin, password }= req.body;
@@ -126,4 +129,30 @@ const getUsers= async(req,res=response)=>{
     }
 }
 
-module.exports={ login, renewToken, inicioData, getUsers }
+const getUserExtra= async(req,res=response)=>{    
+    const id=req.id;
+    const adminDB= await Admin.findById(id)
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const { Tipo, UUID } = req.body
+        let datoDB, imgs;
+                
+        if(Tipo=='0') datoDB= await Cliente.findOne({UUID:UUID}, {UUID:0, __v:0});
+        if(Tipo=='1') {
+            datoDB= await Prestador.findOne({UUID:UUID}, {UUID:0, __v:0});
+            imgs= await Imagen.find({usuario: UUID}, {usuario:0, __v:0});
+        }
+        
+        res.json({
+            ok:true,
+            datoDB,
+            imgs
+        })
+    }
+}
+
+module.exports={ login, renewToken, inicioData, getUsers, getUserExtra }
