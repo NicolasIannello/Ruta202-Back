@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWTAdmin } = require('../middlewares/validar-jwt');
-const { renewToken, login } = require('../controllers/admin');
+const { renewToken, login, inicioData } = require('../controllers/admin');
 
 const router=Router();
 
@@ -13,5 +13,7 @@ router.post('/login', [
 ],login);
 
 router.post('/renew', validarJWTAdmin, renewToken);
+
+router.post('/inicioData', validarJWTAdmin, inicioData);
 
 module.exports=router;

@@ -2,6 +2,7 @@ const { response }=require('express');
 const bcrypt=require('bcryptjs');
 const { generarJWTAdmin } = require('../helpers/jwt');
 const Admin = require('../models/admin');
+const Usuario = require('../models/usuario');
 
 const login=async(req,res=response)=>{
     const { admin, password }= req.body;
@@ -63,4 +64,32 @@ const renewToken= async(req,res=response)=>{
     }
 }
 
-module.exports={ login, renewToken }
+const inicioData= async(req,res=response)=>{    
+    const id=req.id;
+    const adminDB= await Admin.findById(id)
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const [stats] = await Usuario.aggregate([
+            {$group: {
+                _id: null,
+                totalUsers: { $sum: { $cond: [{ $eq: ['$Tipo', '0'] }, 1, 0] } },
+                totalUsersV: { $sum: { $cond: [{ $and: [{ $eq: ['$Tipo', '0'] }, { $eq: ['$Validado', true]}, { $eq: ['$Habilitado', true]} ]}, 1, 0] } },
+                //totalUsersH: { $sum: { $cond: [{ $and: [{ $eq: ['$Tipo', '0'] },{ $eq: ['$Habilitado', true]} ]}, 1, 0] } },
+                totalPrestadores: { $sum: { $cond: [{ $eq: ['$Tipo', '1'] }, 1, 0] } },
+                totalPrestadoresV: { $sum: { $cond: [{ $and: [{ $eq: ['$Tipo', '1'] }, { $eq: ['$Validado', true]}, { $eq: ['$Habilitado', true]} ]}, 1, 0] } },
+                //totalPrestadoresH: { $sum: { $cond: [{ $and: [{ $eq: ['$Tipo', '1'] },{ $eq: ['$Habilitado', true]} ]}, 1, 0] } },
+            }}
+        ]);        
+
+        res.json({
+            ok:true,
+            stats
+        })
+    }
+}
+
+module.exports={ login, renewToken, inicioData }
