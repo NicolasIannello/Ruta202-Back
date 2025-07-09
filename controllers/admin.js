@@ -236,4 +236,32 @@ const changeCampos= (campos, buffer, res)=>{
     return campos;
 }
 
-module.exports={ login, renewToken, inicioData, getUsers, getUserExtra, changeData }
+const borrarUser= async(req,res=response)=>{
+    const id=req.id;
+    const adminDB= await Admin.findById(id)
+    
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const usuarioDB= await Usuario.findById(req.body.id)
+
+        if(usuarioDB.Tipo=='0'){
+            await Cliente.deleteOne({UUID: usuarioDB.UUID})
+        }else{
+            await Prestador.deleteOne({UUID: usuarioDB.UUID})
+            await borrarImagen(usuarioDB.UUID,'vehiculo','vehiculo')
+            await borrarImagen(usuarioDB.UUID,'carnet','frente')
+            await borrarImagen(usuarioDB.UUID,'carnet','dorso')                
+        }
+        await Usuario.findByIdAndDelete(req.body.id)
+
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+module.exports={ login, renewToken, inicioData, getUsers, getUserExtra, changeData, borrarUser }
