@@ -155,4 +155,84 @@ const getUserExtra= async(req,res=response)=>{
     }
 }
 
-module.exports={ login, renewToken, inicioData, getUsers, getUserExtra }
+const changeData= async(req,res=response)=>{
+    const id=req.id;
+    const adminDB= await Admin.findById(id)
+    
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const usuarioDB= await Usuario.findOne({UUID:req.body.UUID})
+        const {...campos}=usuarioDB;
+        campos._doc = changeCampos(campos._doc, req.files['userPayload'].data, res);
+
+        await Usuario.findByIdAndUpdate(usuarioDB._id, campos,{new:true});
+
+        if(usuarioDB.Tipo=='0'){
+            const clienteDB= await Cliente.findOne({UUID: usuarioDB.UUID})
+            const {...campos}=clienteDB;
+            campos._doc = changeCampos(campos._doc, req.files['datoPayload'].data, res);
+                        
+            await Cliente.findByIdAndUpdate(clienteDB.id, campos,{new:true});
+        }else{
+            const prestadorDB= await Prestador.findOne({UUID: usuarioDB.UUID})
+            const {...campos}=prestadorDB;
+            campos._doc = changeCampos(campos._doc, req.files['datoPayload'].data, res);
+
+            await Prestador.findByIdAndUpdate(prestadorDB.id, campos,{new:true});
+
+            if(req.files['img']){
+                await borrarImagen(usuarioDB.UUID,'vehiculo','vehiculo')
+                for (let i = 0; i < req.files['img'].length; i++) {
+                    subirImagen(req.files['img'][i], usuarioDB.UUID, 1, res, 'vehiculo');
+                }
+            }
+
+            if(req.files['imgFrente']){
+                await borrarImagen(usuarioDB.UUID,'carnet','frente')
+                subirImagen(req.files['imgFrente'], usuarioDB.UUID, 0, res, 'frente');
+            }
+            if(req.files['imgDorso']) {
+                await borrarImagen(usuarioDB.UUID,'carnet','dorso')
+                subirImagen(req.files['imgDorso'], usuarioDB.UUID, 0, res, 'dorso');
+            }
+        }
+
+        res.json({
+            ok:true,
+        })
+    }
+}
+
+const changeCampos= (campos, buffer, res)=>{
+    const jsonString = buffer.toString('utf8');
+    const data = JSON.parse(jsonString);
+
+    if(data['CUIT']){
+        const flag=checkCUIT(data['CUIT']);
+        if(!flag){
+            return res.status(400).json({
+                ok:false,
+                msg:'CUIT invalido'
+            });
+        }
+    }
+
+    if(data['EmailResponsable'] || data['_id'] || data['UUID'] || data['UltimaConexion'] || data['TokenID'] || data['Tipo'] || data['Validado']){        
+        return res.status(400).json({
+            ok:false,
+            msg:'Error campos'
+        });
+    }
+
+    for (const key in data) {
+        campos[key]=data[key];
+    }
+
+    return campos;
+}
+
+module.exports={ login, renewToken, inicioData, getUsers, getUserExtra, changeData }
