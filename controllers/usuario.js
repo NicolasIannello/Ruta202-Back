@@ -344,7 +344,7 @@ const changeCampos= (campos, buffer, res)=>{
         }
     }
 
-    if(data['EmailResponsable']){        
+    if(data['EmailResponsable'] || data['_id'] || data['UUID'] || data['UltimaConexion'] || data['TokenID'] || data['Tipo'] || data['Validado']){        
         return res.status(400).json({
             ok:false,
             msg:'Error'
