@@ -6,6 +6,7 @@ const Usuario = require('../models/usuario');
 const Cliente = require('../models/cliente');
 const Prestador = require('../models/prestador');
 const Imagen = require('../models/imagen');
+const { subirImagen, borrarImagen } = require('../helpers/imagenes');
 
 const login=async(req,res=response)=>{
     const { admin, password }= req.body;
