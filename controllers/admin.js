@@ -106,20 +106,34 @@ const getUsers= async(req,res=response)=>{
         return;
     }else{
         const desde= parseInt(req.body.desde) || 0;
-        const limit= parseInt(req.body.limit) || 20;
+        const limit= parseInt(req.body.limit) || 10;
         const orden= parseInt(req.body.orden) || 1;
         const order= req.body.order || '_id';
         var sortOperator = { "$sort": { } };
         sortOperator["$sort"][order] = orden;
-
+        const tipo= req.body.datoTipo || '_id';
+        const dato= req.body.datoBuscar ? true : false;
+        var regExOperator = { "$match": { } };
+        if(dato && dato!=''){
+            if (req.body.datoBuscar=='true' || req.body.datoBuscar=='false'){
+                regExOperator['$match'][tipo] = req.body.datoBuscar=='true' ? true : false;
+            }else{
+                regExOperator["$match"][tipo] = { "$regex": { }, "$options": "i" };
+                regExOperator["$match"][tipo]["$regex"] = req.body.datoBuscar;
+            }
+        }else{
+            regExOperator['$match'][tipo] = { $exists: true }
+        }
+                
         const [ users, total ]= await Promise.all([
             Usuario.aggregate([
+                regExOperator,
                 { $project: { "Contrasena": 0, __v: 0,  "TokenID": 0 } },
                 sortOperator,
                 { $skip: desde },
                 { $limit: limit },
             ]).collation({locale: 'en'}),
-            Usuario.countDocuments()
+            Usuario.countDocuments(regExOperator['$match']).collation({ locale: 'en' })
         ]);
         
         res.json({
