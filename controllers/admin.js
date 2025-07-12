@@ -202,17 +202,17 @@ const changeData= async(req,res=response)=>{
             if(req.files['img']){
                 await borrarImagen(usuarioDB.UUID,'vehiculo','vehiculo')
                 for (let i = 0; i < req.files['img'].length; i++) {
-                    subirImagen(req.files['img'][i], usuarioDB.UUID, 1, res, 'vehiculo');
+                    await subirImagen(req.files['img'][i], usuarioDB.UUID, 1, res, 'vehiculo');
                 }
             }
 
             if(req.files['imgFrente']){
                 await borrarImagen(usuarioDB.UUID,'carnet','frente')
-                subirImagen(req.files['imgFrente'], usuarioDB.UUID, 0, res, 'frente');
+                await subirImagen(req.files['imgFrente'], usuarioDB.UUID, 0, res, 'frente');
             }
             if(req.files['imgDorso']) {
                 await borrarImagen(usuarioDB.UUID,'carnet','dorso')
-                subirImagen(req.files['imgDorso'], usuarioDB.UUID, 0, res, 'dorso');
+                await subirImagen(req.files['imgDorso'], usuarioDB.UUID, 0, res, 'dorso');
             }
         }
 
