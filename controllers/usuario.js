@@ -163,6 +163,7 @@ const login=async(req,res=response)=>{
             token= await generarJWT(usuarioDB.id, usuarioDB.EmailResponsable, 'renew', rememberMe);
             nombre=usuarioDB.Empresa;
             mail=usuarioDB.EmailResponsable;
+            tipo=usuarioDB.Tipo
             id=usuarioDB.id
         }else if(!validado){
             notificar(usuarioDB.EmailResponsable, usuarioDB.id, 'validacion')
@@ -175,6 +176,7 @@ const login=async(req,res=response)=>{
             token,
             nombre,
             mail,
+            tipo,
             id
         })
     } catch (error) {
@@ -206,6 +208,7 @@ const renewToken= async(req,res=response)=>{
             token,
             nombre: usuarioDB.Empresa,
             mail: usuarioDB.EmailResponsable,
+            tipo: usuarioDB.Tipo,
             id
         })
     }
