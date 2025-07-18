@@ -11,7 +11,8 @@ const PedidoSchema = Schema({
     UUID: { type: String, required: true },
     Cliente: { type: String, required: true },
     disponible: { type: Boolean, required: true },
-    prestador: { type: String },
+    oferta: { type: String },
+    estado: { type: String, required: true }
 });
 
 PedidoSchema.method('toJSON', function() {
