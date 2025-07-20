@@ -248,4 +248,90 @@ const aceptarOferta= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta }
+const geocode= async(req,res = response) =>{
+    try {
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        const clienteDB = await Cliente.find({UUID: usuarioDB.UUID})
+        if(!clienteDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        
+        const address = encodeURIComponent(req.body.lugar || '');
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${process.env.GEOCODE}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            //res.json(data);
+            res.json({
+                ok:true,
+                data
+            });
+        } catch (err) {
+            res.status(500).json({
+                ok:false, 
+                error: err.toString() 
+            });
+        }
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+const geocodeReverse= async(req,res = response) =>{
+    try {
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        const clienteDB = await Cliente.find({UUID: usuarioDB.UUID})
+        if(!clienteDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${req.body.lat},${req.body.lng}&key=${process.env.GEOCODE}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            res.json({
+                ok:true,
+                data
+            });
+        } catch (err) {
+            res.status(500).json({
+                ok:false,
+                error: err.toString()
+            });
+        }
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta, geocode, geocodeReverse }
