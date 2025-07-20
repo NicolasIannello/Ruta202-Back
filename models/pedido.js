@@ -12,7 +12,9 @@ const PedidoSchema = Schema({
     Cliente: { type: String, required: true },
     disponible: { type: Boolean, required: true },
     oferta: { type: String },
-    estado: { type: String, required: true }
+    estado: { type: String, required: true },
+    lugarRetiroLatLng: { type: {lat:Number, lng:Number}, required: true },
+    lugarEntregaLatLng: { type: {lat:Number, lng:Number}, required: true }
 });
 
 PedidoSchema.method('toJSON', function() {
