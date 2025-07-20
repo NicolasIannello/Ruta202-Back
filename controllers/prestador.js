@@ -46,7 +46,7 @@ const verPedidos= async(req,res = response) =>{
             Pedido.aggregate([
                 { '$match': { disponible: true } },
                 regExOperator,
-                { $project: { "Cliente": 0, __v: 0,"UUID": 0,"prestador":0,"disponible":0 } },
+                { $project: { "Cliente": 0, __v: 0,"prestador":0,"disponible":0 } },
                 sortOperator,
                 { $skip: desde },
                 { $limit: limit },
@@ -119,4 +119,70 @@ const ofertaPedido= async(req,res = response) =>{
     }
 };
 
-module.exports={ verPedidos, ofertaPedido }
+const verPedido= async(req,res = response) =>{
+    try {
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        const prestadorDB = await Prestador.find({UUID: usuarioDB.UUID})
+        if(!prestadorDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+
+        const pedido = await Pedido.findById(req.body.id)
+
+        res.json({
+            ok:true,
+            pedido,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+const getOfertaPedido= async(req,res = response) =>{
+    try {
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        const prestadorDB = await Prestador.find({UUID: usuarioDB.UUID})
+        if(!prestadorDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+
+        const oferta = await PedidoOferta.find({UUID_Pedido: req.body.pedido, prestador: req.body.prestador})
+        
+        res.json({
+            ok:true,
+            oferta,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ verPedidos, ofertaPedido, verPedido, getOfertaPedido }
