@@ -209,6 +209,7 @@ const renewToken= async(req,res=response)=>{
             nombre: usuarioDB.Empresa,
             mail: usuarioDB.EmailResponsable,
             tipo: usuarioDB.Tipo,
+            UUID: usuarioDB.UUID,
             id
         })
     }
