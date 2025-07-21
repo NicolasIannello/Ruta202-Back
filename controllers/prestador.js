@@ -102,7 +102,7 @@ const ofertaPedido= async(req,res = response) =>{
             return;
         }
         
-        const pedidoOferta = await new PedidoOferta({prestador: usuarioDB.UUID, UUID_Pedido: pedidoDB.UUID, oferta: req.body.oferta, UUID: uuidv4()})
+        const pedidoOferta = await new PedidoOferta({prestador: usuarioDB.UUID, UUID_Pedido: pedidoDB.UUID, oferta: req.body.oferta, UUID: uuidv4(), estado:'Pendiente'})
 
         await pedidoOferta.save()
         
@@ -136,7 +136,7 @@ const verPedido= async(req,res = response) =>{
             return;
         }
 
-        const pedido = await Pedido.findById(req.body.id)
+        let pedido = await Pedido.findOne({UUID: req.body.id})
 
         res.json({
             ok:true,
@@ -185,4 +185,68 @@ const getOfertaPedido= async(req,res = response) =>{
     }
 };
 
-module.exports={ verPedidos, ofertaPedido, verPedido, getOfertaPedido }
+const getOfertas= async(req,res = response) =>{
+    try {
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        const prestadorDB = await Prestador.find({UUID: usuarioDB.UUID})
+        if(!prestadorDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+
+        const desde= parseInt(req.body.desde) || 0;
+        const limit= parseInt(req.body.limit) || 10;
+        const orden= parseInt(req.body.orden) || 1;
+        const order= req.body.order || '_id';
+        var sortOperator = { "$sort": { } };
+        sortOperator["$sort"][order] = orden;
+        const tipo= req.body.datoTipo || '_id';
+        const dato= req.body.datoBuscar ? true : false;
+        var regExOperator = { "$match": { } };
+        if(dato && dato!=''){
+            if (req.body.datoBuscar=='true' || req.body.datoBuscar=='false'){
+                regExOperator['$match'][tipo] = req.body.datoBuscar=='true' ? true : false;
+            }else{
+                regExOperator["$match"][tipo] = { "$regex": { }, "$options": "i" };
+                regExOperator["$match"][tipo]["$regex"] = req.body.datoBuscar;
+            }
+        }else{
+            regExOperator['$match'][tipo] = { $exists: true }
+        }
+                
+        const [ ofertas, total ]= await Promise.all([
+            PedidoOferta.aggregate([
+                { '$match': { prestador: req.body.UUID } },
+                //regExOperator,
+                { $project: { __v: 0 } },
+                sortOperator,
+                { $skip: desde },
+                { $limit: limit },
+            ]).collation({locale: 'en'}),
+            Pedido.countDocuments(regExOperator['$match']).collation({ locale: 'en' })
+        ]);
+        
+        res.json({
+            ok:true,
+            ofertas,
+            total
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas }
