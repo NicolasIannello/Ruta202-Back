@@ -102,7 +102,11 @@ const ofertaPedido= async(req,res = response) =>{
             return;
         }
         
-        const pedidoOferta = await new PedidoOferta({prestador: usuarioDB.UUID, UUID_Pedido: pedidoDB.UUID, oferta: req.body.oferta, UUID: uuidv4(), estado:'Pendiente'})
+        const pedidoOferta = await new PedidoOferta(req.body)
+        pedidoOferta.prestador= usuarioDB.UUID 
+        pedidoOferta.UUID_Pedido= pedidoDB.UUID
+        pedidoOferta.UUID= uuidv4()
+        pedidoOferta.estado='Pendiente'
 
         await pedidoOferta.save()
         
