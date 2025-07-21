@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { verPedidos, ofertaPedido, verPedido, getOfertaPedido } = require('../controllers/prestador');
+const { verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas } = require('../controllers/prestador');
 
 const router=Router();
 
@@ -38,5 +38,13 @@ router.post('/getOfertaPedido', [
 
     validarCampos,validarJWT
 ],getOfertaPedido);
+
+router.post('/getOfertas', [
+    check('tipo','Campo obligatorio').not().isEmpty(),
+    check('token','Campo obligatorio').not().isEmpty(),
+    check('UUID','Campo obligatorio').not().isEmpty(),
+
+    validarCampos,validarJWT
+],getOfertas);
 
 module.exports=router;
