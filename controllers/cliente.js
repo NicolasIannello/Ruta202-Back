@@ -232,8 +232,12 @@ const aceptarOferta= async(req,res = response) =>{
         campos._doc.estado = 'En proceso'
 
         await Pedido.findByIdAndUpdate(pedidoDB[0].id, campos,{new:true});
-
         await PedidoOferta.deleteMany({ 'UUID_Pedido': { $eq: pedidoDB[0].UUID}, 'UUID': { $ne: pedidoOfertaDB.UUID } })
+
+        const {...campos2}=pedidoOfertaDB;
+        campos2._doc.estado = 'Aceptada'
+
+        await PedidoOferta.findByIdAndUpdate(pedidoOfertaDB.id, campos2,{new:true});
 
         res.json({
             ok:true,
