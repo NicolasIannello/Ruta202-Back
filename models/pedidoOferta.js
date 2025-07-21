@@ -5,6 +5,7 @@ const PedidoOfertaSchema = Schema({
     prestador: { type: String, required: true },
     oferta: { type: String, required: true },
     UUID: { type: String, required: true },
+    estado: { type: String, required: true },
 });
 
 PedidoOfertaSchema.method('toJSON', function() {
