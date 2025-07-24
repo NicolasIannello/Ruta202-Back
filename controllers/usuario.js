@@ -362,4 +362,13 @@ const changeCampos= (campos, buffer, res)=>{
     return campos;
 }
 
-module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword, getUserData, changeData }
+const mensaje= async(req,res=response)=>{
+    
+    notificar(process.env.CONTACTO1+'@'+process.env.CONTACTO2, req.body, 'contacto')
+
+    res.json({
+        ok:true,
+    })
+}
+
+module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword, getUserData, changeData, mensaje }

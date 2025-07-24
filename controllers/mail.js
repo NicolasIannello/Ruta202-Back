@@ -13,8 +13,8 @@ const notificar= async(mail,id,tipo)=>{
             pass: process.env.MPASS
         }
     });
-    
-    let token=await generarJWT(id, mail, tipo)
+    let token;
+    if(tipo!='contacto') token=await generarJWT(id, mail, tipo)
     let msg,msg2,title;
     switch (tipo) {
         case 'validacion':
@@ -26,6 +26,11 @@ const notificar= async(mail,id,tipo)=>{
             title="Cambio de contraseña";
             msg='Para realizar un cambio de contraseña siga el link.<br>'+process.env.LINK+'/cambioPassword/'+token;
             msg2="Para realizar un cambio de contraseña siga el link.\n"+process.env.LINK+"/cambioPassword/"+token;
+        break;
+        case 'contacto':
+            title="Formulario de contacto Ruta202";
+            msg='Nombre: '+id.nombre+'<br>'+'Telefono: '+id.telefono+'<br>'+'Email: '+id.email+'<br>'+id.mensaje;
+            msg2="Nombre: "+id.nombre+"\n"+'Telefono: '+id.telefono+'\n'+'Email: '+id.email+'\n'+id.mensaje;
         break;
     }
 
