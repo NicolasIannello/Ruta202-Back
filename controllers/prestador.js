@@ -46,7 +46,7 @@ const verPedidos= async(req,res = response) =>{
             Pedido.aggregate([
                 { '$match': { disponible: true } },
                 regExOperator,
-                { $project: { "Cliente": 0, __v: 0,"prestador":0,"disponible":0 } },
+                { $project: { "Cliente": 0, __v: 0,"prestador":0 } },
                 sortOperator,
                 { $skip: desde },
                 { $limit: limit },
