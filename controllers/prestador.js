@@ -229,9 +229,10 @@ const getOfertas= async(req,res = response) =>{
         const [ ofertas, total ]= await Promise.all([
             PedidoOferta.aggregate([
                 { '$match': { prestador: req.body.UUID } },
-                //regExOperator,
+                regExOperator,
                 { $project: { __v: 0 } },
-                sortOperator,
+                { $sort: { fecha: 1 } },
+                //sortOperator,
                 { $skip: desde },
                 { $limit: limit },
             ]).collation({locale: 'en'}),
