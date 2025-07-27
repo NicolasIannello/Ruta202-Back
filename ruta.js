@@ -3,6 +3,7 @@ require('dotenv').config();
 const cors=require('cors');
 const { dbConnection } = require('./database/config');
 const http = require('http');
+const { socketConnection } = require('./helpers/socket-io');
 
 const app=express();
 
@@ -19,6 +20,7 @@ app.use('/ruta/clientes', require('./routes/clientes'));
 app.use('/ruta/prestadores', require('./routes/prestadores'));
 
 const server = http.createServer(app);
+socketConnection(server);
 
 server.listen( process.env.PORT, () =>{
     console.log('Iniciando');
