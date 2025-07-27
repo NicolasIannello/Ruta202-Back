@@ -17,7 +17,7 @@ router.post('/ofertaPedido', [
     check('tipo','Campo obligatorio').not().isEmpty(),
     check('token','Campo obligatorio').not().isEmpty(),
     check('oferta','Campo obligatorio').not().isEmpty(),
-    check('_id','Campo obligatorio').not().isEmpty(),
+    check('idP','Campo obligatorio').not().isEmpty(),
 
     validarCampos,validarJWT
 ],ofertaPedido);
