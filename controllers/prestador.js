@@ -4,6 +4,8 @@ const Usuario = require('../models/usuario');
 const Prestador = require('../models/prestador');
 const PedidoOferta = require('../models/pedidoOferta');
 const { v4: uuidv4 }=require('uuid');
+const { sendMessage } = require('../helpers/socket-io');
+const { timeNow } = require('../helpers/commons');
 
 const verPedidos= async(req,res = response) =>{
     try {
@@ -264,4 +266,36 @@ const getOfertas= async(req,res = response) =>{
     }
 };
 
-module.exports={ verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas }
+const emitCords= async(req,res = response) =>{
+    try {
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        const prestadorDB = await Prestador.find({UUID: usuarioDB.UUID})
+        if(!prestadorDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        
+        sendMessage(req.body.UUID, "message", { lat:req.body.lat, lng:req.body.lng, last: timeNow() })
+        
+        res.json({
+            ok:true,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas, emitCords }
