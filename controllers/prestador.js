@@ -85,7 +85,7 @@ const ofertaPedido= async(req,res = response) =>{
             })
             return;
         }
-        const pedidoDB = await Pedido.findById(req.body._id)
+        const pedidoDB = await Pedido.findById(req.body.idP)
         if(!pedidoDB || !pedidoDB.disponible){
             res.json({
                 ok:false,
@@ -141,6 +141,16 @@ const verPedido= async(req,res = response) =>{
         }
 
         let pedido = await Pedido.findOne({UUID: req.body.id})
+        
+        if(!pedido.disponible){
+            const oferta = await PedidoOferta.find({UUID_Pedido: pedido.UUID, prestador: usuarioDB.UUID})
+            if(!oferta[0] || oferta[0].estado!='Aceptada') {
+                res.json({
+                    ok:false
+                })
+                return;
+            }
+        }
 
         res.json({
             ok:true,
