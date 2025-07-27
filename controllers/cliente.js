@@ -85,7 +85,7 @@ const getPedidos= async(req,res = response) =>{
             Pedido.aggregate([
                 { '$match': { Cliente: usuarioDB.UUID } },
                 regExOperator,
-                { $project: { "Cliente": 0, __v: 0,"UUID": 0, } },
+                { $project: { "Cliente": 0, __v: 0 } },
                 sortOperator,
                 { $skip: desde },
                 { $limit: limit },
