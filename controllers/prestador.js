@@ -2,6 +2,7 @@ const { response }=require('express');
 const Pedido = require('../models/pedido');
 const Usuario = require('../models/usuario');
 const Prestador = require('../models/prestador');
+const Cliente = require('../models/cliente');
 const PedidoOferta = require('../models/pedidoOferta');
 const { v4: uuidv4 }=require('uuid');
 const { sendMessage } = require('../helpers/socket-io');
@@ -134,19 +135,27 @@ const verPedido= async(req,res = response) =>{
             })
             return;
         }
-        const prestadorDB = await Prestador.find({UUID: usuarioDB.UUID})
-        if(!prestadorDB){
-            res.json({
-                ok:false
-            })
-            return;
-        }
-
         let pedido = await Pedido.findOne({UUID: req.body.id})
+
+        const prestadorDB = await Prestador.findOne({UUID: usuarioDB.UUID})   
+        const clienteDB = await Cliente.findOne({UUID: usuarioDB.UUID})                 
+        if(!prestadorDB){
+            if(!clienteDB || clienteDB.UUID!=pedido.Cliente){                
+                res.json({
+                    ok:false
+                })
+                return;
+            }else if((!clienteDB || clienteDB.UUID!=pedido.Cliente) && !prestadorDB){
+                res.json({
+                    ok:false
+                })
+                return;
+            }
+        }
         
         if(!pedido.disponible){
             const oferta = await PedidoOferta.find({UUID_Pedido: pedido.UUID, prestador: usuarioDB.UUID})
-            if(!oferta[0] || oferta[0].estado!='Aceptada') {
+            if((!oferta[0] || (oferta[0].estado!='Aceptada' && oferta[0].estado!='Finalizado')) && (clienteDB && clienteDB.UUID!=pedido.Cliente)) {                
                 res.json({
                     ok:false
                 })
@@ -298,4 +307,53 @@ const emitCords= async(req,res = response) =>{
     }
 };
 
-module.exports={ verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas, emitCords }
+const terminar= async(req,res = response) =>{
+    try {
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }
+        const pedidoDB = await Pedido.findById(req.body.id)        
+        const ofertaDB = await PedidoOferta.findOne({ UUID: pedidoDB.oferta})
+        if(ofertaDB.prestador!=usuarioDB.UUID){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;  
+        }
+
+        const {...campos}=pedidoDB;
+        campos._doc.selloPrestador = true;
+
+        if(campos._doc.selloCliente && campos._doc.selloPrestador) {
+            campos._doc.estado = 'Finalizado';
+
+            const pedidoOfertaDB = await PedidoOferta.find({ UUID: campos._doc.oferta})
+            const {...campos2}=pedidoOfertaDB[0];
+            campos2._doc.estado = 'Finalizado';
+
+            await PedidoOferta.findByIdAndUpdate(pedidoOfertaDB[0].id, campos2,{new:true});
+        }
+
+        await Pedido.findByIdAndUpdate(pedidoDB.id, campos,{new:true});
+
+
+        res.json({
+            ok:true,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas, emitCords, terminar }
