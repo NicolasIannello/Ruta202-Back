@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta, geocode, geocodeReverse } = require('../controllers/cliente');
+const { crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta, geocode, geocodeReverse, terminar } = require('../controllers/cliente');
 
 const router=Router();
 
@@ -61,5 +61,13 @@ router.post('/geocodeReverse', [
 
     validarCampos,validarJWT
 ],geocodeReverse);
+
+router.post('/terminar', [
+    check('token','Campo obligatorio').not().isEmpty(),
+    check('tipo','Campo obligatorio').not().isEmpty(),
+    check('id','Campo obligatorio').not().isEmpty(),
+
+    validarCampos,validarJWT
+],terminar);
 
 module.exports=router;

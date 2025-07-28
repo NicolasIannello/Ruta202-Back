@@ -28,6 +28,8 @@ const crearPedido= async(req,res = response) =>{
         pedido.disponible=true
         pedido.oferta=''
         pedido.estado='Creado'
+        pedido.selloPrestador=false
+        pedido.selloCliente=false
 
         await pedido.save();
 
@@ -338,4 +340,52 @@ const geocodeReverse= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta, geocode, geocodeReverse }
+const terminar= async(req,res = response) =>{
+    try {
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }
+        const pedidoDB = await Pedido.findById(req.body.id)
+        if(!pedidoDB || pedidoDB.Cliente!=usuarioDB.UUID){
+            res.json({
+                ok:false,
+                msg:'Error'
+            })
+            return;
+        }
+
+        const {...campos}=pedidoDB;
+        campos._doc.selloCliente = true;
+
+        if(campos._doc.selloCliente && campos._doc.selloPrestador) {
+            campos._doc.estado = 'Finalizado';
+
+            const pedidoOfertaDB = await PedidoOferta.find({ UUID: campos._doc.oferta})
+            const {...campos2}=pedidoOfertaDB[0];
+            campos2._doc.estado = 'Finalizado';
+
+            await PedidoOferta.findByIdAndUpdate(pedidoOfertaDB[0].id, campos2,{new:true});
+        }
+
+        await Pedido.findByIdAndUpdate(pedidoDB.id, campos,{new:true});
+
+
+        res.json({
+            ok:true,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta, geocode, geocodeReverse, terminar }
