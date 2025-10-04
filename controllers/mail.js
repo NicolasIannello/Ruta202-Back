@@ -1,18 +1,26 @@
 const nodemailer = require("nodemailer");
 const { generarJWT } = require('../helpers/jwt');
 
-const notificar= async(mail,id,tipo)=>{    
-    const transporter = nodemailer.createTransport({
-        maxConnections: 1,
-        pool: true,
-        host: process.env.MSERVICE,
-        port: 465,
-        secure: true,
-        auth: {
-            user: 'remolques@ruta202.com.ar',
-            pass: process.env.MPASS
-        }
-    });
+const transporter = nodemailer.createTransport({
+    maxConnections: 1,
+    pool: true,
+    host: process.env.MSERVICE,
+    port: 465,
+    secure: true,
+    auth: {
+        user: 'remolques@ruta202.com.ar',
+        pass: process.env.MPASS
+    },
+    tls: {
+        rejectUnauthorized: false
+    },
+    maxMessages: 100,
+    //family: 4,
+    rateDelta: 60 * 60 * 1000, // 1 hour
+    rateLimit: 80         // max messages per delta
+});
+
+const notificar= async(mail,id,tipo)=>{
     let token;
     if(tipo!='contacto') token=await generarJWT(id, mail, tipo)
     let msg,msg2,title;
