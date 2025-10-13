@@ -2,3 +2,4 @@
 .env
 files/carnet/*
 files/vehiculo/*
+files/orden/*
