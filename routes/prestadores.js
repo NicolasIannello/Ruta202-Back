@@ -2,9 +2,12 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas, emitCords, terminar } = require('../controllers/prestador');
+const { verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas, emitCords, terminar, subirOrden } = require('../controllers/prestador');
+const expressFileUpload =require('express-fileupload');
 
 const router=Router();
+
+router.use(expressFileUpload());
 
 router.post('/verPedidos', [
     check('tipo','Campo obligatorio').not().isEmpty(),
@@ -64,5 +67,12 @@ router.post('/terminar', [
 
     validarCampos,validarJWT
 ],terminar);
+
+router.post('/subirOrden', [
+    check('tipo','Campo obligatorio').not().isEmpty(),
+    check('token','Campo obligatorio').not().isEmpty(),
+
+    validarCampos,validarJWT
+],subirOrden);
 
 module.exports=router;
