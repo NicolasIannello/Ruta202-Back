@@ -1,4 +1,5 @@
 const Imagen = require('../models/imagen');
+const Orden = require('../models/orden');
 const { v4: uuidv4 }=require('uuid');
 const fs=require('fs');
 const path=require('path');
@@ -81,4 +82,53 @@ const getImg= async(req,res = response) =>{
     }
 };
 
-module.exports={ subirImagen, getImg, borrarImagen };
+const subirOrdenRetiro= async(orden,prestadorID,UsuarioID,ip,res,nombreCortado,nombreArchivo)=>{    
+    let path= './files/orden/'+nombreArchivo;
+    let datos={ prestador: prestadorID, usuario: UsuarioID, pdf: nombreArchivo, time: '', firma: false, ip: '', };
+
+    orden.mv(path, async (err)=>{
+        if(err){
+            console.log(err);
+            return res.status(500).json({
+                ok:false,
+                msg:'error en carga de orden de retiro '+nombreCortado[0],
+            })
+        }
+        const ordenRetiro = new Orden(datos);
+        await ordenRetiro.save();
+        
+        return true;
+    })
+}
+
+const getOrden= async(req,res = response) =>{
+    const { orden }= req.query
+    const ordenDB = await Orden.findOne({pdf: orden},{_id:0, __v:0})
+        
+    let usuarioDB
+    if(req.id){
+        usuarioDB = await Usuario.findById(req.id)
+        let flag=true;
+        if(!usuarioDB){
+            adminDB = await Admin.findById(req.id)
+            if(adminDB) flag=false;
+        }
+        if(flag && usuarioDB.UUID!=ordenDB.usuario && usuarioDB.UUID!=ordenDB.prestador){
+            return res.status(500).json({
+                ok:false,
+                msg:'error en verificacion',
+            })
+        }
+    }
+
+    let pathOrden= path.join( __dirname, '../files/orden/'+ordenDB.pdf);console.log(ordenDB.pdf);
+    
+    if(fs.existsSync(pathOrden)){
+        res.sendFile(pathOrden);
+    }else{
+        pathOrden= path.join( __dirname, '../files/no-img.jpg');
+        res.sendFile(pathOrden);
+    }
+};
+
+module.exports={ subirImagen, getImg, borrarImagen, subirOrdenRetiro, getOrden };

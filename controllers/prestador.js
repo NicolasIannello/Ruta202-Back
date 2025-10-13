@@ -7,6 +7,7 @@ const PedidoOferta = require('../models/pedidoOferta');
 const { v4: uuidv4 }=require('uuid');
 const { sendMessage } = require('../helpers/socket-io');
 const { timeNow } = require('../helpers/commons');
+const { subirOrdenRetiro } = require('../helpers/imagenes');
 
 const verPedidos= async(req,res = response) =>{
     try {
@@ -356,4 +357,55 @@ const terminar= async(req,res = response) =>{
     }
 };
 
-module.exports={ verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas, emitCords, terminar }
+const subirOrden= async(req,res = response) =>{    
+    try {
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }
+        const pedidoDB = await Pedido.findOne({ UUID: req.body.pedido})  
+        if(pedidoDB.ordenRetiro!=''){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }      
+        const ofertaDB = await PedidoOferta.findOne({ UUID: pedidoDB.oferta})
+        if(ofertaDB.prestador!=usuarioDB.UUID){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;  
+        }        
+
+        const orden=req.files['orden'];
+        const nombreCortado=orden.name.split('.');
+        const extensionArchivo=nombreCortado[nombreCortado.length-1];
+        const nombreArchivo= uuidv4()+'.'+extensionArchivo;
+        await subirOrdenRetiro(req.files['orden'], usuarioDB.UUID, pedidoDB.Cliente, res, nombreCortado,nombreArchivo);
+
+        const {...campos}=pedidoDB;
+        campos._doc.ordenRetiro = nombreArchivo;        
+
+        await Pedido.findByIdAndUpdate(pedidoDB.id, campos,{new:true});
+
+        res.json({
+            ok:true,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ verPedidos, ofertaPedido, verPedido, getOfertaPedido, getOfertas, emitCords, terminar, subirOrden }
