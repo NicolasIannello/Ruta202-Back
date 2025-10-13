@@ -30,6 +30,7 @@ const crearPedido= async(req,res = response) =>{
         pedido.estado='Creado'
         pedido.selloPrestador=false
         pedido.selloCliente=false
+        pedido.ordenRetiro=''
 
         await pedido.save();
 

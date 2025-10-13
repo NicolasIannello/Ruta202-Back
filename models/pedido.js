@@ -17,6 +17,7 @@ const PedidoSchema = Schema({
     lugarEntregaLatLng: { type: {lat:Number, lng:Number}, required: true },
     selloCliente: { type: Boolean, required: true },
     selloPrestador: { type: Boolean, required: true },
+    ordenRetiro: { type: String },
 });
 
 PedidoSchema.method('toJSON', function() {
