@@ -121,7 +121,7 @@ const getOrden= async(req,res = response) =>{
         }
     }
 
-    let pathOrden= path.join( __dirname, '../files/orden/'+ordenDB.pdf);console.log(ordenDB.pdf);
+    let pathOrden= path.join( __dirname, '../files/orden/'+ordenDB.pdf);
     
     if(fs.existsSync(pathOrden)){
         res.sendFile(pathOrden);
