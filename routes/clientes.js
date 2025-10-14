@@ -2,9 +2,12 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWT } = require('../middlewares/validar-jwt');
-const { crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta, geocode, geocodeReverse, terminar } = require('../controllers/cliente');
+const { crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta, geocode, geocodeReverse, terminar, firmar } = require('../controllers/cliente');
+const expressFileUpload =require('express-fileupload');
 
 const router=Router();
+
+router.use(expressFileUpload());
 
 router.post('/crearPedido', [
     check('tipo','Campo obligatorio').not().isEmpty(),
@@ -69,5 +72,13 @@ router.post('/terminar', [
 
     validarCampos,validarJWT
 ],terminar);
+
+router.post('/firmar', [
+    check('token','Campo obligatorio').not().isEmpty(),
+    check('tipo','Campo obligatorio').not().isEmpty(),
+    check('pedido','Campo obligatorio').not().isEmpty(),
+
+    validarCampos,validarJWT
+],firmar);
 
 module.exports=router;

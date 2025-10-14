@@ -3,7 +3,12 @@ const Pedido = require('../models/pedido');
 const { v4: uuidv4 }=require('uuid');
 const Usuario = require('../models/usuario');
 const Cliente = require('../models/cliente');
+const Orden = require('../models/orden');
 const PedidoOferta = require('../models/pedidoOferta');
+const fs=require('fs/promises');
+const path=require('path');
+const { PDFDocument }= require('pdf-lib');
+const { createHash }= require('crypto');
 
 const crearPedido= async(req,res = response) =>{
     try {
@@ -389,4 +394,78 @@ const terminar= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta, geocode, geocodeReverse, terminar }
+const firmar= async(req,res = response) =>{
+    try {
+        const {pedido, firma}=req.body;
+
+        const usuarioDB = await Usuario.findById(req.id)
+        if(!usuarioDB){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }
+        const pedidoDB = await Pedido.findOne({UUID: pedido})
+        if(!pedidoDB){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }
+        const ordenDB = await Orden.findOne({pdf: pedidoDB.ordenRetiro})
+        if(!ordenDB){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }
+
+        const originalPdfBytes = await fs.readFile(path.join( __dirname, '../files/orden/'+'Original-'+ordenDB.pdf));
+
+        const signatureBytes = Buffer.from(firma.split(',')[1], 'base64');
+
+        const pdf = await PDFDocument.load(originalPdfBytes, { updateMetadata: true });
+        const pages = pdf.getPages();
+        const page = pages[pages.length - 1];
+        const { width } = page.getSize();
+
+        const png = await pdf.embedPng(signatureBytes);
+        const sigW = 220, sigH = (png.height / png.width) * sigW;
+        const x = width - sigW - 48;
+        const y = 72;
+
+        pages[0].drawImage(png, { x:350, y: 500, width: sigW, height: sigH });
+        pages[0].drawImage(png, { x:350, y: 150, width: sigW, height: sigH });
+        pages[1].drawImage(png, { x:350, y: 415, width: sigW, height: sigH });
+        //page.drawImage(png, { x, y, width: sigW, height: sigH });
+
+        const ts = new Date().toISOString();
+
+        const signedBytes = await pdf.save();
+        const sha256 = createHash('sha256').update(signedBytes).digest('hex');
+
+        let userID=req.id
+        await fs.writeFile(path.join( __dirname, '../files/orden/'+ordenDB.pdf), signedBytes, { sha256, userID, ts, ua: req.headers['user-agent'], ip: req.ip });
+        
+        const {...campos}=ordenDB;
+        campos._doc.firma = { sha256, userID, ts, ua: req.headers['user-agent'], ip: req.ip };
+
+        await Orden.findByIdAndUpdate(ordenDB.id, campos,{new:true});
+
+        res.json({
+            ok:true,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ crearPedido, getPedidos, getOfertas, borrarOferta, aceptarOferta, geocode, geocodeReverse, terminar, firmar }
