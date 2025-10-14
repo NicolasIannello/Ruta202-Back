@@ -82,9 +82,20 @@ const getImg= async(req,res = response) =>{
     }
 };
 
-const subirOrdenRetiro= async(orden,prestadorID,UsuarioID,ip,res,nombreCortado,nombreArchivo)=>{    
+const subirOrdenRetiro= async(orden,prestadorID,UsuarioID,res,nombreCortado,nombreArchivo)=>{    
     let path= './files/orden/'+nombreArchivo;
-    let datos={ prestador: prestadorID, usuario: UsuarioID, pdf: nombreArchivo, time: '', firma: false, ip: '', };
+    let pathCopia= './files/orden/'+'Original-'+nombreArchivo;
+    let datos={ prestador: prestadorID, usuario: UsuarioID, pdf: nombreArchivo, copia: 'Original-'+nombreArchivo, firma: '' };
+
+    orden.mv(pathCopia, async (err)=>{
+        if(err){
+            console.log(err);
+            return res.status(500).json({
+                ok:false,
+                msg:'error en carga de orden de retiro '+nombreCortado[0],
+            })
+        }
+    })
 
     orden.mv(path, async (err)=>{
         if(err){
