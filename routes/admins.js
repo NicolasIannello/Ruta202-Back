@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWTAdmin } = require('../middlewares/validar-jwt');
-const { renewToken, login, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin } = require('../controllers/admin');
+const { renewToken, login, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin, verPedidosAdmin, getOfertaPedidoAdmin, verPedidoAdmin } = require('../controllers/admin');
 const expressFileUpload =require('express-fileupload');
 
 const router=Router();
@@ -42,5 +42,28 @@ router.post('/crearPedidoAdmin', [
     validarCampos,
     validarJWTAdmin
 ], crearPedidoAdmin);
+
+router.post('/verPedidosAdmin', [
+    check('tipo','Campo obligatorio').not().isEmpty(),
+    check('token','Campo obligatorio').not().isEmpty(),
+
+    validarCampos,validarJWTAdmin
+],verPedidosAdmin);
+
+router.post('/getOfertaPedidoAdmin', [
+    check('tipo','Campo obligatorio').not().isEmpty(),
+    check('token','Campo obligatorio').not().isEmpty(),
+    check('pedido','Campo obligatorio').not().isEmpty(),
+
+    validarCampos,validarJWTAdmin
+],getOfertaPedidoAdmin);
+
+router.post('/verPedidoAdmin', [
+    check('tipo','Campo obligatorio').not().isEmpty(),
+    check('token','Campo obligatorio').not().isEmpty(),
+    check('id','Campo obligatorio').not().isEmpty(),
+
+    validarCampos,validarJWTAdmin
+],verPedidoAdmin);
 
 module.exports=router;
