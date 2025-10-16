@@ -9,6 +9,7 @@ const fs=require('fs/promises');
 const path=require('path');
 const { PDFDocument }= require('pdf-lib');
 const { createHash }= require('crypto');
+const { timeNow } = require('../helpers/commons');
 
 const crearPedido= async(req,res = response) =>{
     try {
@@ -451,7 +452,7 @@ const firmar= async(req,res = response) =>{
         await fs.writeFile(path.join( __dirname, '../files/orden/'+ordenDB.pdf), signedBytes, { sha256, userID, ts, ua: req.headers['user-agent'], ip: req.ip });
         
         const {...campos}=ordenDB;
-        campos._doc.firma = { sha256, userID, ts, ua: req.headers['user-agent'], ip: req.ip };
+        campos._doc.firma = { sha256, userID, ts, ua: req.headers['user-agent'], ip: req.ip, fecha: timeNow() };
 
         await Orden.findByIdAndUpdate(ordenDB.id, campos,{new:true});
 
