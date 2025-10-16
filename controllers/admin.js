@@ -7,6 +7,9 @@ const Cliente = require('../models/cliente');
 const Prestador = require('../models/prestador');
 const Imagen = require('../models/imagen');
 const { subirImagen, borrarImagen } = require('../helpers/imagenes');
+const PedidoOferta = require('../models/pedidoOferta');
+const Pedido = require('../models/pedido');
+const { v4: uuidv4 }=require('uuid');
 
 const login=async(req,res=response)=>{
     const { admin, password }= req.body;
@@ -278,4 +281,56 @@ const borrarUser= async(req,res=response)=>{
     }
 }
 
-module.exports={ login, renewToken, inicioData, getUsers, getUserExtra, changeData, borrarUser }
+const crearPedidoAdmin= async(req,res=response)=>{    
+    try {
+        const id=req.id;
+        const adminDB= await Admin.findById(id)
+        if(!adminDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        const prestadorDB = await Prestador.find({UUID: req.body.prestador})
+        if(!prestadorDB){
+            res.json({
+                ok:false, text:'Dato del prestador erroneo'
+            })
+            return;
+        }
+        
+        const pedido= new Pedido(req.body.pedido);
+        pedido.UUID=uuidv4();
+        pedido.Cliente=adminDB.Usuario
+        pedido.disponible=false
+        pedido.oferta=''
+        pedido.estado='En proceso'
+        pedido.selloPrestador=false
+        pedido.selloCliente=false
+        pedido.ordenRetiro=''
+        pedido.admin=true;
+
+        const pedidoOferta = await new PedidoOferta(req.body)
+        pedidoOferta.prestador= req.body.prestador 
+        pedidoOferta.UUID_Pedido= pedido.UUID
+        pedidoOferta.UUID= uuidv4()
+        pedidoOferta.estado='Aceptada'
+
+        await pedidoOferta.save()
+        await pedido.save();
+
+        res.json({
+            ok:true,
+            pedido: pedido.UUID
+        });
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+}
+
+module.exports={ login, renewToken, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin }
