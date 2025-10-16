@@ -8,6 +8,7 @@ const { v4: uuidv4 }=require('uuid');
 const { sendMessage } = require('../helpers/socket-io');
 const { timeNow } = require('../helpers/commons');
 const { subirOrdenRetiro } = require('../helpers/imagenes');
+const Orden = require('../models/orden');
 
 const verPedidos= async(req,res = response) =>{
     try {
@@ -164,9 +165,12 @@ const verPedido= async(req,res = response) =>{
             }
         }
 
+        let ordenDB = await Orden.findOne({pdf: pedido.ordenRetiro}, {prestador:0, __v:0, usuario:0})
+
         res.json({
             ok:true,
             pedido,
+            ordenDB
         })
         
     } catch (error) {
