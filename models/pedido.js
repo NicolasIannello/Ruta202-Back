@@ -18,6 +18,7 @@ const PedidoSchema = Schema({
     selloCliente: { type: Boolean, required: true },
     selloPrestador: { type: Boolean, required: true },
     ordenRetiro: { type: String },
+    admin: { type: Boolean, required: true },
 });
 
 PedidoSchema.method('toJSON', function() {

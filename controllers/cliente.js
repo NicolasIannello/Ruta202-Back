@@ -37,6 +37,7 @@ const crearPedido= async(req,res = response) =>{
         pedido.selloPrestador=false
         pedido.selloCliente=false
         pedido.ordenRetiro=''
+        pedido.admin=false;
 
         await pedido.save();
 
