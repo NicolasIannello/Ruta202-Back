@@ -1,5 +1,8 @@
 /node_modules
 .env
 files/carnet/*
+!files/carnet/.gitkeep
 files/vehiculo/*
+!files/vehiculo/.gitkeep
 files/orden/*
+!files/orden/.gitkeep
