@@ -20,9 +20,9 @@ const transporter = nodemailer.createTransport({
     rateLimit: 80         // max messages per delta
 });
 
-const notificar= async(mail,id,tipo)=>{
+const notificar= async(mail,id,tipo,dato)=>{
     let token;
-    if(tipo!='contacto') token=await generarJWT(id, mail, tipo)
+    if(tipo!='contacto' && tipo!='pedidoAdmin') token=await generarJWT(id, mail, tipo)
     let msg,msg2,title;
     switch (tipo) {
         case 'validacion':
@@ -39,6 +39,11 @@ const notificar= async(mail,id,tipo)=>{
             title="Formulario de contacto Ruta202";
             msg='Nombre: '+id.nombre+'<br>'+'Telefono: '+id.telefono+'<br>'+'Email: '+id.email+'<br>'+id.mensaje;
             msg2="Nombre: "+id.nombre+"\n"+'Telefono: '+id.telefono+'\n'+'Email: '+id.email+'\n'+id.mensaje;
+        break;
+        case 'pedidoAdmin':
+            title="Creacion de pedido Ruta202";
+            msg='Tipo: '+dato.pedido.tipo+'<br>'+'Funcionalidad: '+dato.pedido.funcionalidad+'<br>'+'Retiro: '+dato.pedido.lugarRetiro+'<br>'+'Persona lugar retiro: '+dato.pedido.personaRetiro+'<br>'+'Entrega: '+dato.pedido.lugarEntrega+'<br>'+'Persona lugar entrega: '+dato.pedido.personaEntrega+'<br>'+'Oferta: '+dato.oferta.oferta+'<br>'+'Fecha: '+dato.oferta.fecha+'<br>';
+            msg2="Tipo: "+dato.pedido.tipo+"\n"+"Funcionalidad: "+dato.pedido.funcionalidad+"\n"+"Retiro: "+dato.pedido.lugarRetiro+"\n"+"Persona lugar retiro: "+dato.pedido.personaRetiro+"\n"+"Entrega: "+dato.pedido.lugarEntrega+"\n"+"Persona lugar entrega: "+dato.pedido.personaEntrega+"\n"+"Oferta: "+dato.oferta.oferta+"\n"+"Fecha: "+dato.oferta.fecha+"\n";
         break;
     }
 
