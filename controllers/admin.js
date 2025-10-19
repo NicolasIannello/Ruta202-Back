@@ -10,6 +10,7 @@ const { subirImagen, borrarImagen } = require('../helpers/imagenes');
 const PedidoOferta = require('../models/pedidoOferta');
 const Pedido = require('../models/pedido');
 const { v4: uuidv4 }=require('uuid');
+const { notificar } = require('./mail');
 
 const login=async(req,res=response)=>{
     const { admin, password }= req.body;
@@ -319,6 +320,9 @@ const crearPedidoAdmin= async(req,res=response)=>{
         await pedidoOferta.save()
         await pedido.save();
 
+        let dato={pedido:pedido, oferta:pedidoOferta}
+        notificar(process.env.CONTACTO1+'@'+process.env.CONTACTO2, '', 'pedidoAdmin', dato)
+
         res.json({
             ok:true,
             pedido: pedido.UUID
@@ -444,4 +448,78 @@ const verPedidoAdmin= async(req,res = response) =>{
     }
 };
 
-module.exports={ login, renewToken, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin, verPedidosAdmin, getOfertaPedidoAdmin, verPedidoAdmin }
+const geocodeAdmin= async(req,res = response) =>{
+    try {        
+        const id=req.id;
+        const adminDB= await Admin.findById(id)
+        if(!adminDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        
+        const address = encodeURIComponent(req.body.lugar || '');
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${address}&key=${process.env.GEOCODE}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            //res.json(data);
+            res.json({
+                ok:true,
+                data
+            });
+        } catch (err) {
+            res.status(500).json({
+                ok:false, 
+                error: err.toString() 
+            });
+        }
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+const geocodeReverseAdmin= async(req,res = response) =>{
+    try {        
+        const id=req.id;
+        const adminDB= await Admin.findById(id)
+        if(!adminDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+        
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${req.body.lat},${req.body.lng}&key=${process.env.GEOCODE}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            res.json({
+                ok:true,
+                data
+            });
+        } catch (err) {
+            res.status(500).json({
+                ok:false,
+                error: err.toString()
+            });
+        }
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ login, renewToken, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin, verPedidosAdmin, getOfertaPedidoAdmin, verPedidoAdmin, geocodeAdmin, geocodeReverseAdmin }

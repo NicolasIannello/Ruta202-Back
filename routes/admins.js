@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWTAdmin } = require('../middlewares/validar-jwt');
-const { renewToken, login, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin, verPedidosAdmin, getOfertaPedidoAdmin, verPedidoAdmin } = require('../controllers/admin');
+const { renewToken, login, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin, verPedidosAdmin, getOfertaPedidoAdmin, verPedidoAdmin, geocodeAdmin, geocodeReverseAdmin } = require('../controllers/admin');
 const expressFileUpload =require('express-fileupload');
 
 const router=Router();
@@ -65,5 +65,22 @@ router.post('/verPedidoAdmin', [
 
     validarCampos,validarJWTAdmin
 ],verPedidoAdmin);
+
+router.post('/geocodeAdmin', [
+    check('token','Campo obligatorio').not().isEmpty(),
+    check('lugar','Campo obligatorio').not().isEmpty(),
+    check('tipo','Campo obligatorio').not().isEmpty(),
+
+    validarCampos,validarJWTAdmin
+],geocodeAdmin);
+
+router.post('/geocodeReverseAdmin', [
+    check('token','Campo obligatorio').not().isEmpty(),
+    check('lat','Campo obligatorio').not().isEmpty(),
+    check('lng','Campo obligatorio').not().isEmpty(),
+    check('tipo','Campo obligatorio').not().isEmpty(),
+
+    validarCampos,validarJWTAdmin
+],geocodeReverseAdmin);
 
 module.exports=router;
