@@ -1,7 +1,7 @@
 const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
-const { crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, changePassword, forgotPassword, getUserData, changeData, mensaje, verPedido, getOfertaPedido, subirOrden } = require('../controllers/usuario');
+const { crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, changePassword, forgotPassword, getUserData, changeData, mensaje, verPedido, getOfertaPedido, subirOrden, getOfertas, firmar } = require('../controllers/usuario');
 const expressFileUpload =require('express-fileupload');
 const { validarJWT } = require('../middlewares/validar-jwt');
 
@@ -90,5 +90,17 @@ router.post('/getOfertaPedido', [
 router.post('/subirOrden', [
     validarCampos,
 ],subirOrden);
+
+router.post('/getOfertas', [
+    check('_id','Campo obligatorio').not().isEmpty(),
+
+    validarCampos
+],getOfertas);
+
+router.post('/firmar', [
+    check('pedido','Campo obligatorio').not().isEmpty(),
+
+    validarCampos
+],firmar);
 
 module.exports=router;

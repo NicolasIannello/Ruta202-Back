@@ -12,6 +12,10 @@ const Imagen = require('../models/imagen');
 const Pedido = require('../models/pedido');
 const PedidoOferta = require('../models/pedidoOferta');
 const Orden = require('../models/orden');
+const fs=require('fs/promises');
+const path=require('path');
+const { PDFDocument }= require('pdf-lib');
+const { createHash }= require('crypto');
 
 const crearUsuario= async(req,res = response) =>{
     const {EmailResponsable, Contrasena, CUIT, Tipo}=req.body;
@@ -454,4 +458,112 @@ const subirOrden= async(req,res = response) =>{
     }
 };
 
-module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword, getUserData, changeData, mensaje, verPedido, getOfertaPedido, subirOrden }
+const getOfertas= async(req,res = response) =>{
+    try {
+        const pedidoDB = await Pedido.findById(req.body._id)
+        if(!pedidoDB){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+
+        const ofertasDB = await PedidoOferta.aggregate([
+            { '$match': { UUID_Pedido: pedidoDB.UUID } },
+            { $lookup: {
+                from: "usuarios",
+                localField: "prestador",
+                foreignField: "UUID",
+                as: "dato_prestador"
+            } },
+            {$unwind: { path: "$dato_prestador", preserveNullAndEmptyArrays: true }},
+            { $project: {
+                __v: 0,
+                "dato_prestador.__v": 0, "dato_prestador.CondicionFiscal": 0, "dato_prestador.Contrasena": 0, "dato_prestador.Habilitado": 0, "dato_prestador.Validado": 0,
+                "dato_prestador._id": 0, "dato_prestador.Tipo": 0, "dato_prestador.TokenID": 0, "dato_prestador.UUID": 0, "dato_prestador.UltimaConexion": 0,
+                "dato_prestador.Apellido": 0, "dato_prestador.Nombre": 0, "dato_prestador.CUIT": 0,
+            } },
+        ]).collation({locale: 'en'});
+
+        
+        res.json({
+            ok:true,
+            ofertasDB,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+const firmar= async(req,res = response) =>{
+    try {
+        const {pedido, firma}=req.body;
+
+        const pedidoDB = await Pedido.findOne({UUID: pedido})
+        if(!pedidoDB){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }
+        const ordenDB = await Orden.findOne({pdf: pedidoDB.ordenRetiro})
+        if(!ordenDB){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }
+
+        const originalPdfBytes = await fs.readFile(path.join( __dirname, '../files/orden/'+'Original-'+ordenDB.pdf));
+
+        const signatureBytes = Buffer.from(firma.split(',')[1], 'base64');
+
+        const pdf = await PDFDocument.load(originalPdfBytes, { updateMetadata: true });
+        const pages = pdf.getPages();
+        const page = pages[pages.length - 1];
+        const { width } = page.getSize();
+
+        const png = await pdf.embedPng(signatureBytes);
+        const sigW = 220, sigH = (png.height / png.width) * sigW;
+        const x = width - sigW - 48;
+        const y = 72;
+
+        pages[0].drawImage(png, { x:350, y: 500, width: sigW, height: sigH });
+        pages[0].drawImage(png, { x:350, y: 150, width: sigW, height: sigH });
+        pages[1].drawImage(png, { x:350, y: 415, width: sigW, height: sigH });
+        //page.drawImage(png, { x, y, width: sigW, height: sigH });
+
+        const ts = new Date().toISOString();
+
+        const signedBytes = await pdf.save();
+        const sha256 = createHash('sha256').update(signedBytes).digest('hex');
+
+        let userID=req.id
+        await fs.writeFile(path.join( __dirname, '../files/orden/'+ordenDB.pdf), signedBytes, { sha256, userID, ts, ua: req.headers['user-agent'], ip: req.ip });
+        
+        const {...campos}=ordenDB;
+        campos._doc.firma = { sha256, userID, ts, ua: req.headers['user-agent'], ip: req.ip, fecha: timeNow() };
+
+        await Orden.findByIdAndUpdate(ordenDB.id, campos,{new:true});
+
+        res.json({
+            ok:true,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword, getUserData, changeData, mensaje, verPedido, getOfertaPedido, subirOrden, getOfertas, firmar }
