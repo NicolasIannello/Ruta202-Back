@@ -142,4 +142,18 @@ const getOrden= async(req,res = response) =>{
     }
 };
 
-module.exports={ subirImagen, getImg, borrarImagen, subirOrdenRetiro, getOrden };
+const getOrden2= async(req,res = response) =>{
+    const { orden }= req.query
+    const ordenDB = await Orden.findOne({pdf: orden},{_id:0, __v:0})
+
+    let pathOrden= path.join( __dirname, '../files/orden/'+ordenDB.pdf);
+    
+    if(fs.existsSync(pathOrden)){
+        res.sendFile(pathOrden);
+    }else{
+        pathOrden= path.join( __dirname, '../files/no-img.jpg');
+        res.sendFile(pathOrden);
+    }
+};
+
+module.exports={ subirImagen, getImg, borrarImagen, subirOrdenRetiro, getOrden, getOrden2 };

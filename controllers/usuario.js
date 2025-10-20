@@ -5,10 +5,13 @@ const Cliente = require('../models/cliente');
 const Prestador = require('../models/prestador');
 const { checkCUIT, timeNow } = require('../helpers/commons');
 const { v4: uuidv4 }=require('uuid');
-const { subirImagen, borrarImagen } = require('../helpers/imagenes');
+const { subirImagen, borrarImagen, subirOrdenRetiro } = require('../helpers/imagenes');
 const { generarJWT } = require('../helpers/jwt');
 const { notificar } = require('./mail');
 const Imagen = require('../models/imagen');
+const Pedido = require('../models/pedido');
+const PedidoOferta = require('../models/pedidoOferta');
+const Orden = require('../models/orden');
 
 const crearUsuario= async(req,res = response) =>{
     const {EmailResponsable, Contrasena, CUIT, Tipo}=req.body;
@@ -371,4 +374,84 @@ const mensaje= async(req,res=response)=>{
     })
 }
 
-module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword, getUserData, changeData, mensaje }
+const verPedido= async(req,res = response) =>{
+    try {
+        let pedido = await Pedido.findOne({UUID: req.body.id})
+        if(!pedido || !pedido.admin){
+            res.json({
+                ok:false
+            })
+            return;
+        }
+
+        let ordenDB = await Orden.findOne({pdf: pedido.ordenRetiro}, {prestador:0, __v:0, usuario:0})
+
+        res.json({
+            ok:true,
+            pedido,
+            ordenDB
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+const getOfertaPedido= async(req,res = response) =>{
+    try {
+        const oferta = await PedidoOferta.find({UUID_Pedido: req.body.pedido})
+        
+        res.json({
+            ok:true,
+            oferta,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+const subirOrden= async(req,res = response) =>{    
+    try {
+        const pedidoDB = await Pedido.findOne({ UUID: req.body.pedido})  
+        if(pedidoDB.ordenRetiro!=''){
+            res.json({
+                ok:false,
+                msg:'Ocurrió un error'
+            })
+            return;
+        }   
+
+        const orden=req.files['orden'];
+        const nombreCortado=orden.name.split('.');
+        const extensionArchivo=nombreCortado[nombreCortado.length-1];
+        const nombreArchivo= uuidv4()+'.'+extensionArchivo;
+        await subirOrdenRetiro(req.files['orden'], pedidoDB.Cliente, pedidoDB.Cliente, res, nombreCortado,nombreArchivo);
+
+        const {...campos}=pedidoDB;
+        campos._doc.ordenRetiro = nombreArchivo;        
+
+        await Pedido.findByIdAndUpdate(pedidoDB.id, campos,{new:true});
+
+        res.json({
+            ok:true,
+        })
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            ok:false,
+            msg:'error'
+        });
+    }
+};
+
+module.exports={ crearUsuario, validarCuenta, reValidarCuenta, login, renewToken, forgotPassword, changePassword, getUserData, changeData, mensaje, verPedido, getOfertaPedido, subirOrden }
