@@ -292,13 +292,6 @@ const crearPedidoAdmin= async(req,res=response)=>{
             })
             return;
         }
-        const prestadorDB = await Prestador.find({UUID: req.body.prestador})
-        if(!prestadorDB){
-            res.json({
-                ok:false, text:'Dato del prestador erroneo'
-            })
-            return;
-        }
         
         const pedido= new Pedido(req.body.pedido);
         pedido.UUID=uuidv4();
@@ -312,7 +305,7 @@ const crearPedidoAdmin= async(req,res=response)=>{
         pedido.admin=true;
 
         const pedidoOferta = await new PedidoOferta(req.body)
-        pedidoOferta.prestador= req.body.prestador 
+        pedidoOferta.prestador= adminDB.Usuario 
         pedidoOferta.UUID_Pedido= pedido.UUID
         pedidoOferta.UUID= uuidv4()
         pedidoOferta.estado='Aceptada'
