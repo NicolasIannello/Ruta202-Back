@@ -2,7 +2,7 @@ const { Router }=require('express');
 const { check }=require('express-validator');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { validarJWTAdmin } = require('../middlewares/validar-jwt');
-const { renewToken, login, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin, verPedidosAdmin, getOfertaPedidoAdmin, verPedidoAdmin, geocodeAdmin, geocodeReverseAdmin } = require('../controllers/admin');
+const { renewToken, login, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin, verPedidosAdmin, getOfertaPedidoAdmin, verPedidoAdmin, geocodeAdmin, geocodeReverseAdmin, getOrdenes } = require('../controllers/admin');
 const expressFileUpload =require('express-fileupload');
 
 const router=Router();
@@ -82,5 +82,7 @@ router.post('/geocodeReverseAdmin', [
 
     validarCampos,validarJWTAdmin
 ],geocodeReverseAdmin);
+
+router.post('/getOrdenes', validarJWTAdmin, getOrdenes);
 
 module.exports=router;
