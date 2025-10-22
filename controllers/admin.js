@@ -11,6 +11,7 @@ const PedidoOferta = require('../models/pedidoOferta');
 const Pedido = require('../models/pedido');
 const { v4: uuidv4 }=require('uuid');
 const { notificar } = require('./mail');
+const Orden = require('../models/orden');
 
 const login=async(req,res=response)=>{
     const { admin, password }= req.body;
@@ -63,6 +64,9 @@ const renewToken= async(req,res=response)=>{
         await Admin.findByIdAndUpdate(adminDB.id, campos,{new:true});  
 
         const token= await generarJWTAdmin(id);
+
+        verifyTresMeses();
+
         res.json({
             ok:true,
             token,
@@ -515,4 +519,62 @@ const geocodeReverseAdmin= async(req,res = response) =>{
     }
 };
 
-module.exports={ login, renewToken, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin, verPedidosAdmin, getOfertaPedidoAdmin, verPedidoAdmin, geocodeAdmin, geocodeReverseAdmin }
+const getOrdenes= async(req,res=response)=>{    
+    const id=req.id;
+    const adminDB= await Admin.findById(id)
+    if(!adminDB){
+        res.json({
+            ok:false
+        })
+        return;
+    }else{
+        const desde= parseInt(req.body.desde) || 0;
+        const limit= parseInt(req.body.limit) || 10;
+        var regExOperatorUser = { "$match": { } };
+        if(req.body.usuario!=''){
+            regExOperatorUser["$match"]['usuario'] = { "$regex": { }, "$options": "i" };
+            regExOperatorUser["$match"]['usuario']["$regex"] = req.body.usuario;
+        }else{
+            regExOperatorUser['$match']['usuario'] = { $exists: true }
+        }
+        var regExOperatorPrestador = { "$match": { } };
+        if(req.body.prestador!=''){
+            regExOperatorPrestador["$match"]['prestador'] = { "$regex": { }, "$options": "i" };
+            regExOperatorPrestador["$match"]['prestador']["$regex"] = req.body.prestador;
+        }else{
+            regExOperatorPrestador['$match']['prestador'] = { $exists: true }
+        }
+
+        const [ ordenes, total ]= await Promise.all([
+            Orden.aggregate([
+                regExOperatorUser,
+                regExOperatorPrestador,
+                { $skip: desde },
+                { $limit: limit },
+            ]).collation({locale: 'en'}),
+            Orden.countDocuments().collation({ locale: 'en' })
+        ]);
+        
+        res.json({
+            ok:true,
+            ordenes,
+            total
+        })
+    }
+}
+
+const verifyTresMeses = async() => {
+    let tresMeses = new Date();
+    tresMeses.setMonth(tresMeses.getMonth()-3);
+    tresMeses=tresMeses.getFullYear()+'-'+((tresMeses.getMonth()+1)<10 ? ('0'+(tresMeses.getMonth()+1)) : tresMeses.getMonth()+1 )+'-'+((tresMeses.getDate())<10 ? ('0'+(tresMeses.getDate())) : tresMeses.getDate())
+    const ofertaViejos= await PedidoOferta.find({ 'fecha': { $lt: tresMeses } },);
+    
+    if(ofertaViejos){
+        for (let i = 0; i < ofertaViejos.length; i++) {
+            await Pedido.deleteMany({ 'UUID': { $eq: ofertaViejos[i].UUID_Pedido } },)
+            await PedidoOferta.deleteMany({ 'UUID': { $eq: ofertaViejos[i].UUID } },);           
+        }
+    }
+}
+
+module.exports={ login, renewToken, inicioData, getUsers, getUserExtra, changeData, borrarUser, crearPedidoAdmin, verPedidosAdmin, getOfertaPedidoAdmin, verPedidoAdmin, geocodeAdmin, geocodeReverseAdmin, getOrdenes }
