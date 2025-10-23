@@ -13,6 +13,8 @@ router.post('/crearPedido', [
     check('tipo','Campo obligatorio').not().isEmpty(),
     check('token','Campo obligatorio').not().isEmpty(),
     check('pedido','Campo obligatorio').not().isEmpty(),
+    check('matricula','el campo es obligatorio').not().isEmpty(),
+    check('matricula').isLicensePlate('any'),
 
     validarCampos,validarJWT
 ],crearPedido);

@@ -545,13 +545,31 @@ const getOrdenes= async(req,res=response)=>{
             regExOperatorPrestador['$match']['prestador'] = { $exists: true }
         }
 
+        const pipeline = [
+            regExOperatorUser,
+            regExOperatorPrestador,
+            {
+                $lookup: {
+                    from: "pedidos",
+                    localField: "pdf",
+                    foreignField: "ordenRetiro",
+                    as: "pedido",
+                }
+            },
+        ];
+
+        if(req.body.matricula!=''){
+            pipeline.push({
+                $match: {
+                    'pedido.matricula': { "$regex": req.body.matricula, "$options": "i" }
+                }
+            })
+        }
+        pipeline.push({ $skip: desde });
+        pipeline.push({ $limit: limit });
+
         const [ ordenes, total ]= await Promise.all([
-            Orden.aggregate([
-                regExOperatorUser,
-                regExOperatorPrestador,
-                { $skip: desde },
-                { $limit: limit },
-            ]).collation({locale: 'en'}),
+            Orden.aggregate(pipeline).collation({locale: 'en'}),
             Orden.countDocuments().collation({ locale: 'en' })
         ]);
         
